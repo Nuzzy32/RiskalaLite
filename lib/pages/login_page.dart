@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() => _isLoading = false);
-        // Navigate to home when ready
+        Navigator.pushReplacementNamed(context, '/home');
       }
     });
   }

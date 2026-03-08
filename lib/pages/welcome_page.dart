@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -222,11 +221,7 @@ class WelcomePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(9999),
                         ),
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginPage(),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/login');
                         },
                         child: const Text(
                           'Get Started',
