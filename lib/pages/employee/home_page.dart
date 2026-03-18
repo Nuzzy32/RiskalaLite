@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/bottom_nav.dart';
+import '../../widgets/bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool showNav;
+  const HomePage({super.key, this.showNav = true});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -170,15 +171,14 @@ class _HomePageState extends State<HomePage> {
                     children: List.generate(_moods.length, (i) {
                       final mood = _moods[i];
                       final isSelected = _selectedMood == i;
-                      return Padding(
-                        padding: EdgeInsets.only(right: i < _moods.length - 1 ? 12 : 0),
+                      return Expanded(
                         child: GestureDetector(
                           onTap: () => setState(() => _selectedMood = i),
                           child: Column(
                             children: [
                               Container(
-                                width: 72,
-                                height: 72,
+                                width: 64,
+                                height: 64,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: isSelected ? const Color(0xFF61D1DB).withValues(alpha: 0.1) : Colors.white,
@@ -225,66 +225,79 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(48),
+                      borderRadius: BorderRadius.circular(24),
                       gradient: const LinearGradient(
-                        begin: Alignment(-0.5, -1),
+                        begin: Alignment(-1, -1),
                         end: Alignment(1, 1),
-                        colors: [Color(0xFFE0F7F9), Colors.white],
+                        colors: [Color(0xFFE4F6F8), Color(0xFFF4FAFB), Colors.white],
+                        stops: [0.0, 0.5, 1.0],
                       ),
-                      border: Border.all(color: const Color(0xFF61D1DB).withValues(alpha: 0.1)),
+                      border: Border.all(color: const Color(0xFF61D1DB).withValues(alpha: 0.08)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Stack(
                         children: [
-                          const Text(
-                            'Stress Check-in',
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F191A),
-                              height: 1.56,
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Icon(
+                              Icons.cloud_outlined,
+                              size: 40,
+                              color: const Color(0xFF61D1DB).withValues(alpha: 0.35),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Saatnya melakukan check in rutin untuk memantau tingkat stres Anda.',
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontSize: 14,
-                              color: Color(0xFF568B8F),
-                              height: 1.625,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pushNamed(context, '/stress'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF61D1DB),
-                              foregroundColor: Colors.white,
-                              elevation: 4,
-                              shadowColor: const Color(0xFF61D1DB).withValues(alpha: 0.2),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text(
-                                  'Mulai Stress Assessment',
-                                  style: TextStyle(
-                                    fontFamily: 'Manrope',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.35,
-                                  ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Stress Check-in',
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F191A),
+                                  height: 1.56,
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward, size: 16),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Saatnya melakukan check in rutin untuk memantau tingkat stres Anda.',
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 14,
+                                  color: Color(0xFF568B8F),
+                                  height: 1.625,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pushNamed(context, '/stress'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF61D1DB),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Text(
+                                      'Mulai Stress Assessment',
+                                      style: TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.35,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward, size: 16),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -403,12 +416,13 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           // Bottom Nav
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(active: 'home', onTap: _navigateTo),
-          ),
+          if (widget.showNav)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BottomNav(active: 'home', onTap: _navigateTo),
+            ),
         ],
       ),
     );

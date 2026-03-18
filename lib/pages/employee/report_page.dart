@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/bottom_nav.dart';
+import '../../widgets/bottom_nav.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
+  final bool showNav;
+  const ReportPage({super.key, this.showNav = true});
 
   @override
   State<ReportPage> createState() => _ReportPageState();
@@ -369,12 +370,13 @@ class _ReportPageState extends State<ReportPage> {
           ),
 
           // Bottom Nav
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(active: 'report', onTap: _navigateTo),
-          ),
+          if (widget.showNav)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BottomNav(active: 'report', onTap: _navigateTo),
+            ),
         ],
       ),
     );

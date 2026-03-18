@@ -13,6 +13,8 @@ class _WelcomePageState extends State<WelcomePage>
   late final AnimationController _floatController;
   late final AnimationController _rotateController;
   late final AnimationController _pulseController;
+  late final AnimationController _textController;
+  late final AnimationController _underlineController;
 
   @override
   void initState() {
@@ -35,6 +37,27 @@ class _WelcomePageState extends State<WelcomePage>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+
+    // Text character animation
+    _textController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    // Underline animation
+    _underlineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    // Start text animation after a short delay
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        _textController.forward().then((_) {
+          if (mounted) _underlineController.forward();
+        });
+      }
+    });
   }
 
   @override
@@ -42,6 +65,8 @@ class _WelcomePageState extends State<WelcomePage>
     _floatController.dispose();
     _rotateController.dispose();
     _pulseController.dispose();
+    _textController.dispose();
+    _underlineController.dispose();
     super.dispose();
   }
 
@@ -55,11 +80,7 @@ class _WelcomePageState extends State<WelcomePage>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFDFF6F6),
-              Color(0xFFF2FAFA),
-              Color(0xFFF5F5DC),
-            ],
+            colors: [Color(0xFFDFF6F6), Color(0xFFF2FAFA), Color(0xFFF5F5DC)],
             stops: [0.0, 0.5, 0.9],
           ),
         ),
@@ -111,10 +132,13 @@ class _WelcomePageState extends State<WelcomePage>
                         pulseAnimation: _pulseController,
                       ),
                       const SizedBox(height: 48),
-                      // Title
-                      const Text(
-                        'Welcome to',
-                        style: TextStyle(
+                      // Animated title
+                      AnimatedTextReveal(
+                        text: 'Welcome to',
+                        controller: _textController,
+                        startIndex: 0,
+                        totalChars: 23,
+                        style: const TextStyle(
                           fontFamily: 'Public Sans',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
@@ -123,9 +147,12 @@ class _WelcomePageState extends State<WelcomePage>
                           height: 1.25,
                         ),
                       ),
-                      const Text(
-                        'RISKALA Lite',
-                        style: TextStyle(
+                      AnimatedTextReveal(
+                        text: 'RISKALA Lite',
+                        controller: _textController,
+                        startIndex: 11,
+                        totalChars: 23,
+                        style: const TextStyle(
                           fontFamily: 'Public Sans',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
@@ -134,62 +161,45 @@ class _WelcomePageState extends State<WelcomePage>
                           height: 1.25,
                         ),
                       ),
+                      // Gradient underline
+                      const SizedBox(height: 6),
+                      GradientUnderline(controller: _underlineController),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Your safe space for mental wellness',
-                        style: TextStyle(
-                          fontFamily: 'Public Sans',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF5A8A96),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 44),
+                        child: Text(
+                          'Your safe space for mental wellness',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Public Sans',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(
+                              0xFF5A8A96,
+                            ).withValues(alpha: 0.82),
+                            letterSpacing: -0.15,
+                            height: 1.35,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Get Started button
+                // Get Started shimmer button
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
-                  child: SizedBox(
-                    height: 56,
-                    width: double.infinity,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF6ADBDD),
-                            Color(0xFF58C6D6),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(9999),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                const Color(0xFF61D1DB).withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: MaterialButton(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9999),
-                        ),
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                        child: const Text(
-                          'Get Started',
-                          style: TextStyle(
-                            fontFamily: 'Public Sans',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.45,
-                          ),
-                        ),
+                  child: ShimmerButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/login');
+                    },
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.45,
                       ),
                     ),
                   ),
@@ -262,7 +272,11 @@ class AnimatedBuilder3DContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilderWidget(
-      listenable: Listenable.merge([floatAnimation, rotateAnimation, pulseAnimation]),
+      listenable: Listenable.merge([
+        floatAnimation,
+        rotateAnimation,
+        pulseAnimation,
+      ]),
       floatAnimation: floatAnimation,
       rotateAnimation: rotateAnimation,
       pulseAnimation: pulseAnimation,
@@ -326,11 +340,13 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 height: 320,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFBEECEE)
-                      .withValues(alpha: 0.15 + (pulseValue * 0.1)),
+                  color: const Color(
+                    0xFFBEECEE,
+                  ).withValues(alpha: 0.15 + (pulseValue * 0.1)),
                   border: Border.all(
-                    color: const Color(0xFFBEECEE)
-                        .withValues(alpha: 0.1 + (pulseValue * 0.08)),
+                    color: const Color(
+                      0xFFBEECEE,
+                    ).withValues(alpha: 0.1 + (pulseValue * 0.08)),
                     width: 1.5,
                   ),
                 ),
@@ -349,11 +365,13 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 height: 240,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFAEDFE3)
-                      .withValues(alpha: 0.25 + (pulseValue * 0.1)),
+                  color: const Color(
+                    0xFFAEDFE3,
+                  ).withValues(alpha: 0.25 + (pulseValue * 0.1)),
                   border: Border.all(
-                    color: const Color(0xFFAEDFE3)
-                        .withValues(alpha: 0.15 + (pulseValue * 0.1)),
+                    color: const Color(
+                      0xFFAEDFE3,
+                    ).withValues(alpha: 0.15 + (pulseValue * 0.1)),
                     width: 1.5,
                   ),
                 ),
@@ -372,11 +390,13 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF9DD4D9)
-                      .withValues(alpha: 0.35 + (pulseValue * 0.1)),
+                  color: const Color(
+                    0xFF9DD4D9,
+                  ).withValues(alpha: 0.35 + (pulseValue * 0.1)),
                   border: Border.all(
-                    color: const Color(0xFF9DD4D9)
-                        .withValues(alpha: 0.2 + (pulseValue * 0.1)),
+                    color: const Color(
+                      0xFF9DD4D9,
+                    ).withValues(alpha: 0.2 + (pulseValue * 0.1)),
                     width: 1.5,
                   ),
                 ),
@@ -452,6 +472,222 @@ class AnimatedBuilderWidget extends AnimatedWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class AnimatedTextReveal extends StatelessWidget {
+  final String text;
+  final AnimationController controller;
+  final int startIndex;
+  final int totalChars;
+  final int delayMs;
+  final TextStyle style;
+
+  const AnimatedTextReveal({
+    super.key,
+    required this.text,
+    required this.controller,
+    required this.startIndex,
+    required this.totalChars,
+    this.delayMs = 0,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        return Wrap(
+          alignment: WrapAlignment.center,
+          children: List.generate(text.length, (i) {
+            final charProgress = _charProgress(i);
+            final opacity = charProgress.clamp(0.0, 1.0);
+            final yOffset = 20.0 * (1.0 - charProgress).clamp(0.0, 1.0);
+            return Transform.translate(
+              offset: Offset(0, yOffset),
+              child: Opacity(
+                opacity: opacity,
+                child: Text(text[i], style: style),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+
+  double _charProgress(int i) {
+    final globalIndex = startIndex + i;
+    final delayFraction =
+        delayMs / (controller.duration?.inMilliseconds ?? 1200);
+    final charStart =
+        delayFraction +
+        (globalIndex / totalChars) * (1.0 - delayFraction) * 0.7;
+    final charEnd = charStart + 0.3;
+    if (controller.value <= charStart) return 0.0;
+    if (controller.value >= charEnd) return 1.0;
+    return Curves.easeOut.transform(
+      (controller.value - charStart) / (charEnd - charStart),
+    );
+  }
+}
+
+class GradientUnderline extends StatelessWidget {
+  final AnimationController controller;
+
+  const GradientUnderline({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        return SizedBox(
+          width: 160 * controller.value,
+          height: 3,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF6ADBDD),
+                  Color(0xFF8B5CF6),
+                  Color(0xFFEC4899),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ShimmerButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final Widget child;
+
+  const ShimmerButton({
+    super.key,
+    required this.onPressed,
+    required this.child,
+  });
+
+  @override
+  State<ShimmerButton> createState() => _ShimmerButtonState();
+}
+
+class _ShimmerButtonState extends State<ShimmerButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _shimmerController,
+      builder: (context, child) {
+        final shimmerPos = _shimmerController.value;
+
+        return GestureDetector(
+          onTap: widget.onPressed,
+          child: Container(
+            height: 56,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9999),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF6ADBDD), Color(0xFF58C6D6)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF61D1DB).withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+                // Inner glow
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  spreadRadius: -2,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(9999),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Shimmer sweep
+                  Positioned.fill(
+                    child: Transform.translate(
+                      offset: Offset(
+                        (shimmerPos * 3.0 - 1.0) *
+                            MediaQuery.of(context).size.width,
+                        0,
+                      ),
+                      child: Container(
+                        width: 120,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0.0),
+                              Colors.white.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0.3),
+                              Colors.white.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Inner highlight (top edge)
+                  Positioned(
+                    top: 0,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.0),
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Text
+                  widget.child,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'pages/welcome_page.dart';
 import 'pages/login_page.dart';
-import 'pages/home_page.dart';
-import 'pages/profile_page.dart';
-import 'pages/report_page.dart';
-import 'pages/stress_page.dart';
+import 'pages/employee/main_shell.dart';
+import 'pages/employee/stress_page.dart';
+import 'pages/hr/hr_main_shell.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,10 +24,15 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        '/profile': (context) => const ProfilePage(),
-        '/report': (context) => const ReportPage(),
+        // Employee routes
+        '/home': (context) => const MainShell(),
+        '/profile': (context) => const MainShell(initialTab: 2),
+        '/report': (context) => const MainShell(initialTab: 0),
         '/stress': (context) => const StressPage(),
+        // HR routes
+        '/hr/home': (context) => const HrMainShell(),
+        '/hr/report': (context) => const HrMainShell(initialTab: 2),
+        '/hr/profile': (context) => const HrMainShell(initialTab: 3),
       },
     );
   }

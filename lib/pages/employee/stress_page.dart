@@ -95,7 +95,11 @@ class _StressPageState extends State<StressPage> {
                         onTap: _prevQuestion,
                         child: const Padding(
                           padding: EdgeInsets.all(8),
-                          child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF245A72), size: 16),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Color(0xFF245A72),
+                            size: 16,
+                          ),
                         ),
                       ),
                       const Expanded(
@@ -130,7 +134,9 @@ class _StressPageState extends State<StressPage> {
                               fontFamily: 'Manrope',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF245A72).withValues(alpha: 0.7),
+                              color: const Color(
+                                0xFF245A72,
+                              ).withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -142,7 +148,9 @@ class _StressPageState extends State<StressPage> {
                           value: progress,
                           minHeight: 8,
                           backgroundColor: const Color(0xFFE2E8F0),
-                          valueColor: const AlwaysStoppedAnimation(Color(0xFF41C1DD)),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Color(0xFF41C1DD),
+                          ),
                         ),
                       ),
                     ],
@@ -151,8 +159,8 @@ class _StressPageState extends State<StressPage> {
 
                 // Question + options
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                     child: Column(
                       children: [
                         // Question text
@@ -176,7 +184,9 @@ class _StressPageState extends State<StressPage> {
                             fontFamily: 'Manrope',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                            color: const Color(
+                              0xFF245A72,
+                            ).withValues(alpha: 0.6),
                             height: 1.43,
                           ),
                         ),
@@ -188,19 +198,29 @@ class _StressPageState extends State<StressPage> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: GestureDetector(
-                              onTap: () => setState(() => _answers[_currentQ] = i),
+                              onTap: () =>
+                                  setState(() => _answers[_currentQ] = i),
                               child: Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 17,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFFB3F3F4) : Colors.white,
+                                  color: isSelected
+                                      ? const Color(0xFFB3F3F4)
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(9999),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFFB3F3F4) : Colors.transparent,
+                                    color: isSelected
+                                        ? const Color(0xFFB3F3F4)
+                                        : Colors.transparent,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF41C1DD).withValues(alpha: 0.1),
+                                      color: const Color(
+                                        0xFF41C1DD,
+                                      ).withValues(alpha: 0.1),
                                       blurRadius: 20,
                                       offset: const Offset(0, 4),
                                       spreadRadius: -2,
@@ -208,25 +228,31 @@ class _StressPageState extends State<StressPage> {
                                   ],
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      _options[i],
-                                      style: const TextStyle(
-                                        fontFamily: 'Manrope',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF245A72),
+                                    Expanded(
+                                      child: Text(
+                                        _options[i],
+                                        style: const TextStyle(
+                                          fontFamily: 'Manrope',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF245A72),
+                                        ),
                                       ),
                                     ),
+                                    const SizedBox(width: 16),
                                     Container(
                                       width: 24,
                                       height: 24,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: isSelected ? const Color(0xFF245A72) : Colors.transparent,
+                                        color: isSelected
+                                            ? const Color(0xFF245A72)
+                                            : Colors.transparent,
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFF245A72) : const Color(0xFFE2E8F0),
+                                          color: isSelected
+                                              ? const Color(0xFF245A72)
+                                              : const Color(0xFFE2E8F0),
                                           width: 2,
                                         ),
                                       ),
@@ -237,7 +263,8 @@ class _StressPageState extends State<StressPage> {
                                                 height: 8,
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
-                                                  borderRadius: BorderRadius.circular(4),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
                                                 ),
                                               ),
                                             )
@@ -256,36 +283,51 @@ class _StressPageState extends State<StressPage> {
 
                 // Bottom action
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                   child: SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _answers[_currentQ] != null ? _nextQuestion : null,
+                      onPressed: _answers[_currentQ] != null
+                          ? _nextQuestion
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF41C1DD),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFF41C1DD).withValues(alpha: 0.6),
-                        disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(
+                          0xFF41C1DD,
+                        ).withValues(alpha: 0.6),
+                        disabledForegroundColor: Colors.white.withValues(
+                          alpha: 0.6,
+                        ),
                         elevation: 4,
-                        shadowColor: const Color(0xFF41C1DD).withValues(alpha: 0.3),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                        shadowColor: const Color(
+                          0xFF41C1DD,
+                        ).withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _currentQ < 9 ? 'Pertanyaan Selanjutnya' : 'Selesai',
-                            style: const TextStyle(
-                              fontFamily: 'Manrope',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.45,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _currentQ < 9
+                                  ? 'Pertanyaan Selanjutnya'
+                                  : 'Selesai',
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.45,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 16),
-                        ],
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, size: 16),
+                          ],
+                        ),
                       ),
                     ),
                   ),

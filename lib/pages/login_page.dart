@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/dummy_data.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,12 +21,16 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  bool _isHrNip(String nip) => DummyAuth.isHrNip(nip);
+
   void _handleLogin() {
     setState(() => _isLoading = true);
+    final nip = _nipController.text;
+    final route = _isHrNip(nip) ? '/hr/home' : '/home';
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, route);
       }
     });
   }
@@ -38,12 +43,15 @@ class _LoginPageState extends State<LoginPage> {
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment(-0.4, -1),
-            end: Alignment(0.4, 1),
+            begin: Alignment(0, -1),
+            end: Alignment(0, 1),
             colors: [
-              Color(0xFFF2FAFA),
-              Color(0xFFDFF6F6),
+              Color(0xFFFCF9F0), // warm cream top
+              Color(0xFFF5F8F2), // light sage mid
+              Color(0xFFE8F4F6), // teal-tinted bottom
+              Color(0xFFD9EFF3), // teal bottom
             ],
+            stops: [0.0, 0.3, 0.7, 1.0],
           ),
         ),
         child: Stack(
@@ -94,12 +102,12 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF13A4EC).withValues(alpha: 0.1),
+                                  color: const Color(0xFF61D1DB).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: const Icon(
                                   Icons.spa,
-                                  color: Color(0xFF13A4EC),
+                                  color: Color(0xFF245A72),
                                   size: 28,
                                 ),
                               ),
@@ -138,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                                   controller: _nipController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
-                                    hintText: 'NIP',
+                                    hintText: 'Email address',
                                     hintStyle: const TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 16,
@@ -260,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                                     borderRadius: BorderRadius.circular(9999),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF13A4EC).withValues(alpha: 0.4),
+                                        color: const Color(0xFF61D1DB).withValues(alpha: 0.35),
                                         blurRadius: 20,
                                       ),
                                     ],

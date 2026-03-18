@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/bottom_nav.dart';
+import '../../widgets/bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool showNav;
+  const ProfilePage({super.key, this.showNav = true});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -290,12 +291,13 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
 
           // Bottom Nav
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomNav(active: 'account', onTap: _navigateTo),
-          ),
+          if (widget.showNav)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BottomNav(active: 'account', onTap: _navigateTo),
+            ),
         ],
       ),
     );
