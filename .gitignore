@@ -46,6 +46,7 @@ app.*.map.json
 
 # Claude Code / AI tooling
 .claude/
+.agents/
 .mcp.json
 .vscode/mcp.json
 skills-lock.json
