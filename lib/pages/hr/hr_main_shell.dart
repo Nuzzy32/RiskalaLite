@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
 import 'hr_home_page.dart';
 import 'hr_employees_page.dart';
-import '../employee/report_page.dart';
+import 'hr_report_page.dart';
 import '../employee/profile_page.dart';
 
 class HrMainShell extends StatefulWidget {
@@ -74,7 +74,7 @@ class _HrMainShellState extends State<HrMainShell> {
       case 1:
         return const HrEmployeesPage(key: ValueKey('employees'), showNav: false);
       case 2:
-        return const ReportPage(key: ValueKey('report'), showNav: false);
+        return const HrReportPage(key: ValueKey('report'), showNav: false);
       case 3:
         return const ProfilePage(key: ValueKey('profile'), showNav: false);
       default:

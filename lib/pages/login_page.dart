@@ -146,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                                   controller: _nipController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
-                                    hintText: 'Email address',
+                                    hintText: 'NIP',
                                     hintStyle: const TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 16,
