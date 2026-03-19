@@ -44,10 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Claude Code / AI tooling
+# Editor & local config
 .claude/
 .agents/
 .mcp.json
-.vscode/mcp.json
+.vscode/
 skills-lock.json
 CLAUDE.md
