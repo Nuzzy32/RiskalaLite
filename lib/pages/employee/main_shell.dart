@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../widgets/custom_drawer.dart';
 import 'home_page.dart';
 import 'report_page.dart';
 import 'profile_page.dart';
@@ -33,6 +34,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(),
       body: Stack(
         children: [
           // Page content with iOS-like slide transition

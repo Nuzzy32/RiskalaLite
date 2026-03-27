@@ -53,6 +53,28 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
                     child: Row(
                       children: [
+                        // Menu button
+                        GestureDetector(
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFF8FAFC)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.menu_rounded, color: Color(0xFF245A72), size: 20),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         // Avatar
                         Stack(
                           children: [
