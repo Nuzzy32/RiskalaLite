@@ -23,6 +23,7 @@ class BottomNav extends StatefulWidget {
   static const defaultItems = [
     NavItem(id: 'report', label: 'REPORT', icon: Icons.description_outlined),
     NavItem(id: 'home', label: 'HOME', icon: Icons.home_outlined),
+    NavItem(id: 'analytics', label: 'ANALYTICS', icon: Icons.bar_chart_outlined),
     NavItem(id: 'account', label: 'ACCOUNT', icon: Icons.person_outline),
   ];
 

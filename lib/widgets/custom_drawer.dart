@@ -50,7 +50,18 @@ class CustomDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.assignment_outlined,
                     label: 'Assessment Log',
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/history');
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.folder_outlined,
+                    label: 'Riwayat Laporan',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/report-history');
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.support_agent_outlined,

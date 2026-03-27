@@ -95,3 +95,4 @@ app.*.map.json
 .vscode/
 skills-lock.json
 CLAUDE.md
+PROGRESS.md

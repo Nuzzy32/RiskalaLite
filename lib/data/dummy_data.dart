@@ -214,3 +214,173 @@ IconData divisionIcon(String name) {
     return Icons.business_outlined;
   }
 }
+
+// -- Assessment History --------------------------------------------------------
+
+class AssessmentRecord {
+  final DateTime date;
+  final int score;
+  final int maxScore;
+  final String stressLevel; // 'low', 'moderate', 'high'
+
+  const AssessmentRecord({
+    required this.date,
+    required this.score,
+    this.maxScore = 50,
+    required this.stressLevel,
+  });
+}
+
+class DummyAssessmentHistory {
+  static final List<AssessmentRecord> records = [
+    AssessmentRecord(date: DateTime(2026, 3, 25), score: 18, stressLevel: 'low'),
+    AssessmentRecord(date: DateTime(2026, 3, 18), score: 32, stressLevel: 'moderate'),
+    AssessmentRecord(date: DateTime(2026, 3, 11), score: 38, stressLevel: 'high'),
+    AssessmentRecord(date: DateTime(2026, 3, 4), score: 28, stressLevel: 'moderate'),
+    AssessmentRecord(date: DateTime(2026, 2, 25), score: 22, stressLevel: 'low'),
+    AssessmentRecord(date: DateTime(2026, 2, 18), score: 35, stressLevel: 'high'),
+    AssessmentRecord(date: DateTime(2026, 2, 11), score: 20, stressLevel: 'low'),
+    AssessmentRecord(date: DateTime(2026, 2, 4), score: 30, stressLevel: 'moderate'),
+    AssessmentRecord(date: DateTime(2026, 1, 28), score: 15, stressLevel: 'low'),
+    AssessmentRecord(date: DateTime(2026, 1, 21), score: 26, stressLevel: 'moderate'),
+  ];
+}
+
+// -- Incident Reports ---------------------------------------------------------
+
+class IncidentReport {
+  final String id;
+  final DateTime date;
+  final String category;
+  final String description;
+  final int stressLevel; // 1-5
+  final String status; // 'pending', 'reviewed', 'resolved'
+  final String? hrResponse;
+
+  const IncidentReport({
+    required this.id,
+    required this.date,
+    required this.category,
+    required this.description,
+    required this.stressLevel,
+    required this.status,
+    this.hrResponse,
+  });
+}
+
+class DummyIncidentReports {
+  static final List<IncidentReport> reports = [
+    IncidentReport(
+      id: 'RPT001',
+      date: DateTime(2026, 3, 25),
+      category: 'Beban Kerja Berlebihan',
+      description:
+          'Selama 2 minggu terakhir, saya mendapatkan assignment tambahan dari 3 project berbeda secara bersamaan. Deadline yang diberikan sangat ketat dan tidak realistis. Saya sudah mencoba berbicara dengan lead saya tetapi belum ada perubahan signifikan. Hal ini membuat saya merasa kewalahan dan sulit fokus.',
+      stressLevel: 4,
+      status: 'reviewed',
+      hrResponse:
+          'Terima kasih atas laporan Anda. Kami sudah berdiskusi dengan manajer divisi untuk melakukan review beban kerja tim. Akan ada penyesuaian task distribution mulai minggu depan. Silakan hubungi kami jika kondisi tidak membaik.',
+    ),
+    IncidentReport(
+      id: 'RPT002',
+      date: DateTime(2026, 3, 18),
+      category: 'Konflik dengan Rekan Kerja',
+      description:
+          'Terjadi miskomunikasi berulang dengan rekan satu tim terkait pembagian tugas. Beberapa kali hasil pekerjaan saya diubah tanpa diskusi terlebih dahulu, yang membuat saya merasa tidak dihargai.',
+      stressLevel: 3,
+      status: 'resolved',
+      hrResponse:
+          'Kami telah memfasilitasi mediasi antara kedua belah pihak pada tanggal 22 Maret. Kedua pihak sepakat untuk membuat workflow yang lebih jelas dan melakukan daily sync setiap pagi. Laporan ini ditutup karena situasi sudah membaik.',
+    ),
+    IncidentReport(
+      id: 'RPT003',
+      date: DateTime(2026, 3, 10),
+      category: 'Work-Life Balance',
+      description:
+          'Akhir-akhir ini saya sering diminta lembur hingga malam tanpa kompensasi yang jelas. Waktu istirahat saya berkurang drastis dan mulai mempengaruhi kesehatan fisik saya.',
+      stressLevel: 5,
+      status: 'reviewed',
+      hrResponse:
+          'Kami memahami kekhawatiran Anda. Tim HR sedang melakukan audit terhadap kebijakan overtime di divisi Anda. Sementara itu, kami sarankan untuk berkomunikasi langsung dengan atasan mengenai batas waktu kerja Anda.',
+    ),
+    IncidentReport(
+      id: 'RPT004',
+      date: DateTime(2026, 2, 28),
+      category: 'Masalah Manajemen',
+      description:
+          'Atasan saya jarang memberikan feedback yang konstruktif dan seringkali mengubah prioritas kerja secara mendadak. Hal ini membuat saya bingung dan tidak yakin dengan arah pekerjaan saya.',
+      stressLevel: 3,
+      status: 'pending',
+    ),
+    IncidentReport(
+      id: 'RPT005',
+      date: DateTime(2026, 2, 15),
+      category: 'Lingkungan Kerja',
+      description:
+          'Ruangan kerja kami sangat bising karena renovasi gedung lantai atas. Sudah berlangsung selama 3 minggu dan sangat mengganggu konsentrasi tim kami.',
+      stressLevel: 2,
+      status: 'resolved',
+      hrResponse:
+          'Renovasi telah selesai per tanggal 5 Maret. Kami juga telah menyediakan noise-cancelling headphones untuk tim Anda sebagai solusi jangka pendek. Terima kasih atas kesabaran Anda.',
+    ),
+    IncidentReport(
+      id: 'RPT006',
+      date: DateTime(2026, 2, 5),
+      category: 'Beban Kerja Berlebihan',
+      description:
+          'Saya ditugaskan menangani client baru yang sangat demanding sementara project lama belum selesai. Merasa tertekan karena harus multitasking terus-menerus.',
+      stressLevel: 4,
+      status: 'resolved',
+      hrResponse:
+          'Setelah evaluasi, kami telah menambahkan satu anggota tim baru untuk membantu project lama Anda. Semoga ini membantu meringankan beban kerja.',
+    ),
+    IncidentReport(
+      id: 'RPT007',
+      date: DateTime(2026, 1, 20),
+      category: 'Lainnya',
+      description:
+          'Saya merasa kurang mendapat kesempatan untuk pengembangan karir. Tidak ada program training atau mentoring yang tersedia di divisi saya.',
+      stressLevel: 2,
+      status: 'pending',
+    ),
+  ];
+}
+
+// -- Mood & Weekly Stress (for Analytics) --------------------------------------
+
+class MoodEntry {
+  final String day; // e.g. 'Mon'
+  final int moodScore; // 1=Kurang Baik, 2=Netral, 3=Baik, 4=Sangat Baik
+
+  const MoodEntry(this.day, this.moodScore);
+}
+
+class DummyMoodHistory {
+  static const List<MoodEntry> last7Days = [
+    MoodEntry('Sen', 3),
+    MoodEntry('Sel', 4),
+    MoodEntry('Rab', 2),
+    MoodEntry('Kam', 3),
+    MoodEntry('Jum', 3),
+    MoodEntry('Sab', 4),
+    MoodEntry('Min', 3),
+  ];
+
+  static const moodLabels = {1: 'Kurang', 2: 'Netral', 3: 'Baik', 4: 'Sangat Baik'};
+}
+
+class WeeklyStressEntry {
+  final String label; // e.g. 'Minggu 1'
+  final double avgScore; // 0-100
+
+  const WeeklyStressEntry(this.label, this.avgScore);
+}
+
+class DummyWeeklyStress {
+  static const List<WeeklyStressEntry> last4Weeks = [
+    WeeklyStressEntry('Mg 1', 62),
+    WeeklyStressEntry('Mg 2', 48),
+    WeeklyStressEntry('Mg 3', 55),
+    WeeklyStressEntry('Mg 4', 40),
+  ];
+}

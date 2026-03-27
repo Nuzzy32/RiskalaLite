@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/custom_drawer.dart';
+import 'analytics_page.dart';
 import 'home_page.dart';
 import 'report_page.dart';
 import 'profile_page.dart';
@@ -16,7 +17,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   late int _currentIndex;
-  static const _tabIds = ['report', 'home', 'account'];
+  static const _tabIds = ['report', 'home', 'analytics', 'account'];
 
   @override
   void initState() {
@@ -76,6 +77,8 @@ class _MainShellState extends State<MainShell> {
       case 0:
         return const ReportPage(key: ValueKey('report'), showNav: false);
       case 2:
+        return const AnalyticsPage(key: ValueKey('analytics'), showNav: false);
+      case 3:
         return const ProfilePage(key: ValueKey('profile'), showNav: false);
       default:
         return const HomePage(key: ValueKey('home'), showNav: false);
