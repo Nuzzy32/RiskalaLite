@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:riskala_lite2/pages/stress_page.dart';
+import 'package:riskala_lite2/pages/employee/stress_page.dart';
 import 'package:riskala_lite2/main.dart';
 
 void main() {
