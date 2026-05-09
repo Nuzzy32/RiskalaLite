@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_data.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,18 +21,32 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  bool _isHrNip(String nip) => DummyAuth.isHrNip(nip);
+  Future<void> _handleLogin() async {
+    final nip = _nipController.text.trim();
+    final pass = _passwordController.text;
+    if (nip.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('NIP dan password wajib diisi')),
+      );
+      return;
+    }
 
-  void _handleLogin() {
     setState(() => _isLoading = true);
-    final nip = _nipController.text;
-    final route = _isHrNip(nip) ? '/hr/home' : '/home';
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.pushReplacementNamed(context, route);
-      }
-    });
+    try {
+      await ApiService.login(nip, pass);
+      if (!mounted) return;
+      final route = ApiService.isHr ? '/hr/home' : '/home';
+      Navigator.pushReplacementNamed(context, route);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: const Color(0xFF9D174D),
+        ),
+      );
+    }
   }
 
   @override

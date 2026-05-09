@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../services/api_service.dart';
 
 class ReportPage extends StatefulWidget {
   final bool showNav;
@@ -15,6 +16,7 @@ class _ReportPageState extends State<ReportPage> {
   final _descController = TextEditingController();
   double _stressLevel = 3;
   bool _submitted = false;
+  bool _submitting = false;
 
   final _categories = [
     'Beban Kerja Berlebihan',
@@ -31,11 +33,46 @@ class _ReportPageState extends State<ReportPage> {
     super.dispose();
   }
 
-  void _handleSubmit() {
-    setState(() => _submitted = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _submitted = false);
-    });
+  Future<void> _handleSubmit() async {
+    if (_category.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih kategori masalah dulu')),
+      );
+      return;
+    }
+    if (_descController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Isi deskripsi masalah dulu')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      final kategoriIdx = _categories.indexOf(_category) + 1;
+      await ApiService.submitReport(
+        kategori: kategoriIdx,
+        deskripsi: _descController.text.trim(),
+        tingkatStres: _stressLevel.round(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _submitted = true;
+        _submitting = false;
+        _category = '';
+        _descController.clear();
+        _stressLevel = 3;
+      });
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _submitted = false);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal: ${e.toString().replaceAll('Exception: ', '')}')),
+      );
+    }
   }
 
   void _navigateTo(String id) {
@@ -344,22 +381,29 @@ class _ReportPageState extends State<ReportPage> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: _handleSubmit,
+                          onPressed: _submitting ? null : _handleSubmit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF60D0DC),
                             foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFF60D0DC).withValues(alpha: 0.5),
                             elevation: 4,
                             shadowColor: const Color(0xFF60D0DC).withValues(alpha: 0.3),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
                           ),
-                          child: Text(
-                            _submitted ? 'Terkirim! \u2714' : 'Kirim',
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          child: _submitting
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Text(
+                                  _submitted ? 'Terkirim! \u2714' : 'Kirim',
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

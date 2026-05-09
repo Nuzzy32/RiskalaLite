@@ -1,19 +1,46 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
-import 'assessment_detail_page.dart';
+import '../../services/api_service.dart';
 
-class AssessmentHistoryPage extends StatelessWidget {
+class AssessmentHistoryPage extends StatefulWidget {
   const AssessmentHistoryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final records = DummyAssessmentHistory.records;
+  State<AssessmentHistoryPage> createState() => _AssessmentHistoryPageState();
+}
 
+class _AssessmentHistoryPageState extends State<AssessmentHistoryPage> {
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _records = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await ApiService.getAssessmentHistory();
+      setState(() { _records = data; _loading = false; });
+    } catch (e) {
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); _loading = false; });
+    }
+  }
+
+  String _levelFromKategori(int k) {
+    if (k == 3) return 'high';
+    if (k == 2) return 'moderate';
+    return 'low';
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: Column(
         children: [
-          // Header
           Container(
             color: const Color(0xFFF8F9FA),
             child: SafeArea(
@@ -56,30 +83,62 @@ class AssessmentHistoryPage extends StatelessWidget {
               ),
             ),
           ),
-
-          // List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-              itemCount: records.length,
-              itemBuilder: (context, index) => GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AssessmentDetailPage(record: records[index]),
-                  ),
-                ),
-                child: _buildCard(records[index]),
-              ),
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: Color(0xFF9D174D)),
+                            const SizedBox(height: 12),
+                            Text(_error!, textAlign: TextAlign.center,
+                                style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+                            const SizedBox(height: 12),
+                            ElevatedButton(onPressed: _loadData, child: const Text('Coba lagi')),
+                          ],
+                        ),
+                      )
+                    : _records.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.assessment_outlined, size: 64,
+                                    color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Belum ada riwayat assessment',
+                                  style: TextStyle(
+                                    fontFamily: 'NimbusSans',
+                                    fontSize: 15,
+                                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _loadData,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                              itemCount: _records.length,
+                              itemBuilder: (context, index) =>
+                                  _buildCard(_records[index]),
+                            ),
+                          ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCard(AssessmentRecord record) {
-    final dateStr = '${record.date.day}/${record.date.month}/${record.date.year}';
+  Widget _buildCard(Map<String, dynamic> record) {
+    final date = DateTime.tryParse(record['tgl_SA']?.toString() ?? '') ?? DateTime.now();
+    final score = (record['total_score'] as num?)?.toInt() ?? 0;
+    final kategori = (record['kategori_stres'] as num?)?.toInt() ?? 1;
+    final level = _levelFromKategori(kategori);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -98,7 +157,6 @@ class AssessmentHistoryPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Date circle
           Container(
             width: 52,
             height: 52,
@@ -117,7 +175,7 @@ class AssessmentHistoryPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${record.date.day}',
+                  '${date.day}',
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 18,
@@ -127,7 +185,7 @@ class AssessmentHistoryPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _monthAbbr(record.date.month),
+                  _monthAbbr(date.month),
                   style: TextStyle(
                     fontFamily: 'NimbusSans',
                     fontSize: 10,
@@ -139,38 +197,27 @@ class AssessmentHistoryPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Info
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Stress Assessment',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF245A72),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  dateStr,
-                  style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 12,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5),
-                  ),
-                ),
               ],
             ),
           ),
-          // Score + Badge
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${record.score}/${record.maxScore}',
+                '$score/50',
                 style: const TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 16,
@@ -179,7 +226,7 @@ class AssessmentHistoryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              _buildBadge(record.stressLevel),
+              _buildBadge(level),
             ],
           ),
         ],
@@ -197,10 +244,7 @@ class AssessmentHistoryPage extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(
         label,
         style: TextStyle(

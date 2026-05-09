@@ -6,8 +6,11 @@ import 'pages/employee/assessment_history_page.dart';
 import 'pages/employee/stress_page.dart';
 import 'pages/employee/report_history_page.dart';
 import 'pages/hr/hr_main_shell.dart';
+import 'services/api_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.restoreSession();
   runApp(const MyApp());
 }
 

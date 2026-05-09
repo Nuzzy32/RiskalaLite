@@ -1,178 +1,86 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
+import '../../services/api_service.dart';
 
-class AnalyticsPage extends StatelessWidget {
+class AnalyticsPage extends StatefulWidget {
   final bool showNav;
   const AnalyticsPage({super.key, this.showNav = true});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 140),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                child: Text(
-                  'Analytics',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF245A72),
-                    letterSpacing: -0.6,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Ringkasan mood & stress kamu minggu ini',
-                  style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 14,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+  State<AnalyticsPage> createState() => _AnalyticsPageState();
+}
 
-              // Mood Trend
-              _buildMoodTrendSection(context),
-              const SizedBox(height: 24),
+class _AnalyticsPageState extends State<AnalyticsPage> {
+  bool _loading = true;
 
-              // Stress Level
-              _buildStressSection(context),
-              const SizedBox(height: 24),
+  // Mood 7 hari: index 0=Sen ... 6=Min, value 0=no data, 1-4=mood level
+  final List<int> _moodData = List.filled(7, 0);
 
-              // Insights
-              _buildInsightsCard(),
-            ],
-          ),
-        ),
-      ),
-    );
+  // Stress 4 minggu
+  final List<double> _stressScores = [0, 0, 0, 0];
+  bool _hasStressData = false;
+  bool _hasMoodData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
   }
 
-  // ── Mood Trend (7-day bar chart) ──────────────────────────────────────────
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+    try {
+      final results = await Future.wait([
+        ApiService.getMoodWeekly(),
+        ApiService.getAssessmentHistory(),
+      ]);
 
-  Widget _buildMoodTrendSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF245A72).withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Mood Trend',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF245A72),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    '7 Hari',
-                    style: TextStyle(
-                      fontFamily: 'NimbusSans',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF61D1DB),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Bar chart
-            SizedBox(
-              height: 140,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: DummyMoodHistory.last7Days.map((entry) {
-                  final fraction = entry.moodScore / 4;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => _showMoodDetail(context, entry),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(
-                              _moodIcon(entry.moodScore),
-                              size: 16,
-                              color: _moodColor(entry.moodScore),
-                            ),
-                            const SizedBox(height: 6),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 400),
-                              height: 80 * fraction,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(999),
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    _moodColor(entry.moodScore).withValues(alpha: 0.8),
-                                    _moodColor(entry.moodScore).withValues(alpha: 0.4),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              entry.day,
-                              style: TextStyle(
-                                fontFamily: 'NimbusSans',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF245A72).withValues(alpha: 0.45),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      final moods = results[0];
+      final assessments = results[1];
+
+      _buildMoodData(moods);
+      _buildStressData(assessments);
+    } catch (_) {}
+
+    setState(() => _loading = false);
   }
+
+  void _buildMoodData(List<Map<String, dynamic>> moods) {
+    for (final m in moods) {
+      final date = DateTime.tryParse(m['tgl_M']?.toString() ?? '');
+      if (date == null) continue;
+      // weekday: 1=Mon .. 7=Sun → index 0..6
+      final idx = date.weekday - 1;
+      _moodData[idx] = (m['level_mood'] as num?)?.toInt() ?? 0;
+      _hasMoodData = true;
+    }
+  }
+
+  void _buildStressData(List<Map<String, dynamic>> assessments) {
+    if (assessments.isEmpty) return;
+    _hasStressData = true;
+
+    final now = DateTime.now();
+    final weekScores = List<List<double>>.generate(4, (_) => []);
+
+    for (final a in assessments) {
+      final date = DateTime.tryParse(a['tgl_SA']?.toString() ?? '');
+      if (date == null) continue;
+      final daysAgo = now.difference(date).inDays;
+      final weekIdx = (daysAgo / 7).floor();
+      if (weekIdx >= 0 && weekIdx < 4) {
+        final score = ((a['total_score'] as num?)?.toDouble() ?? 0) / 50 * 100;
+        weekScores[weekIdx].add(score);
+      }
+    }
+
+    for (int i = 0; i < 4; i++) {
+      if (weekScores[i].isNotEmpty) {
+        _stressScores[3 - i] = weekScores[i].reduce((a, b) => a + b) / weekScores[i].length;
+      }
+    }
+  }
+
+  static const _days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
   IconData _moodIcon(int score) => switch (score) {
         4 => Icons.sentiment_very_satisfied,
@@ -195,9 +103,182 @@ class AnalyticsPage extends StatelessWidget {
         _ => 'Kurang Baik',
       };
 
-  // ── Mood Detail Modal ───────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: SafeArea(
+        bottom: false,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+            : RefreshIndicator(
+                onRefresh: _loadData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 140),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                        child: Text(
+                          'Analytics',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF245A72),
+                            letterSpacing: -0.6,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          'Ringkasan mood & stress kamu minggu ini',
+                          style: TextStyle(
+                            fontFamily: 'NimbusSans',
+                            fontSize: 14,
+                            color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildMoodTrendSection(),
+                      const SizedBox(height: 24),
+                      _buildStressSection(),
+                      const SizedBox(height: 24),
+                      _buildInsightsCard(),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
 
-  void _showMoodDetail(BuildContext context, MoodEntry entry) {
+  Widget _buildMoodTrendSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF245A72).withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Mood Trend',
+                    style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF245A72))),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text('7 Hari',
+                      style: TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF61D1DB))),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (!_hasMoodData)
+              _buildEmptyChartState('Belum ada data mood minggu ini')
+            else
+              SizedBox(
+                height: 140,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(7, (i) {
+                    final score = _moodData[i];
+                    final hasData = score > 0;
+                    final fraction = hasData ? score / 4 : 0.1;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: hasData
+                            ? () => _showMoodDetail(i, score)
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Icon(
+                                hasData
+                                    ? _moodIcon(score)
+                                    : Icons.remove,
+                                size: 16,
+                                color: hasData
+                                    ? _moodColor(score)
+                                    : const Color(0xFF245A72).withValues(alpha: 0.15),
+                              ),
+                              const SizedBox(height: 6),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 400),
+                                height: 80 * fraction,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  gradient: hasData
+                                      ? LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                          colors: [
+                                            _moodColor(score).withValues(alpha: 0.8),
+                                            _moodColor(score).withValues(alpha: 0.4),
+                                          ],
+                                        )
+                                      : LinearGradient(colors: [
+                                          const Color(0xFF245A72).withValues(alpha: 0.08),
+                                          const Color(0xFF245A72).withValues(alpha: 0.04),
+                                        ]),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _days[i],
+                                style: TextStyle(
+                                  fontFamily: 'NimbusSans',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF245A72).withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMoodDetail(int dayIdx, int score) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -210,65 +291,48 @@ class AnalyticsPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
             Container(
-              width: 40,
-              height: 4,
+              width: 40, height: 4,
               decoration: BoxDecoration(
                 color: const Color(0xFF245A72).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             const SizedBox(height: 20),
-            // Mood icon
             Container(
-              width: 64,
-              height: 64,
+              width: 64, height: 64,
               decoration: BoxDecoration(
-                color: _moodColor(entry.moodScore).withValues(alpha: 0.12),
+                color: _moodColor(score).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                _moodIcon(entry.moodScore),
-                size: 36,
-                color: _moodColor(entry.moodScore),
-              ),
+              child: Icon(_moodIcon(score), size: 36, color: _moodColor(score)),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Hari ${entry.day}',
-              style: TextStyle(
-                fontFamily: 'NimbusSans',
-                fontSize: 13,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5),
-              ),
-            ),
+            Text('Hari ${_days[dayIdx]}',
+                style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 13,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5))),
             const SizedBox(height: 4),
-            Text(
-              'Suasana Hati: ${_moodLabel(entry.moodScore)}',
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF245A72),
-              ),
-            ),
+            Text('Suasana Hati: ${_moodLabel(score)}',
+                style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF245A72))),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: _moodColor(entry.moodScore).withValues(alpha: 0.12),
+                color: _moodColor(score).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
-                'Skor: ${entry.moodScore}/4',
-                style: TextStyle(
-                  fontFamily: 'NimbusSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _moodColor(entry.moodScore),
-                ),
-              ),
+              child: Text('Skor: $score/4',
+                  style: TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _moodColor(score))),
             ),
             const SizedBox(height: 16),
           ],
@@ -277,10 +341,8 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  // ── Stress Level (4-week interactive chart) ─────────────────────────────
-
-  Widget _buildStressSection(BuildContext context) {
-    final weeks = DummyWeeklyStress.last4Weeks;
+  Widget _buildStressSection() {
+    final validScores = _stressScores.where((s) => s > 0).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -305,82 +367,74 @@ class AnalyticsPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Stress Level',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF245A72),
-                  ),
-                ),
+                const Text('Stress Level',
+                    style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF245A72))),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    '4 Minggu',
-                    style: TextStyle(
-                      fontFamily: 'NimbusSans',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF61D1DB),
-                    ),
-                  ),
+                  child: const Text('4 Minggu',
+                      style: TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF61D1DB))),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            // Line chart with tap overlay
-            SizedBox(
-              height: 140,
-              child: LayoutBuilder(
-                builder: (ctx, constraints) {
-                  final chartW = constraints.maxWidth;
-                  const chartH = 140.0;
-                  return Stack(
-                    children: [
-                      CustomPaint(
-                        size: Size(chartW, chartH),
-                        painter: _StressChartPainter(weeks),
-                      ),
-                      // Invisible tap targets on each data point
-                      ...List.generate(weeks.length, (i) {
-                        final x = (i / (weeks.length - 1)) * chartW;
-                        final y = chartH - (weeks[i].avgScore / 100) * chartH;
-                        return Positioned(
-                          left: x - 20,
-                          top: y - 20,
-                          width: 40,
-                          height: 40,
-                          child: GestureDetector(
-                            onTap: () => _showStressDetail(context, weeks[i]),
-                            behavior: HitTestBehavior.opaque,
-                          ),
-                        );
-                      }),
-                    ],
-                  );
-                },
+            if (!_hasStressData || validScores.isEmpty)
+              _buildEmptyChartState('Belum ada data stress assessment')
+            else
+              SizedBox(
+                height: 140,
+                child: LayoutBuilder(
+                  builder: (ctx, constraints) {
+                    return Stack(
+                      children: [
+                        CustomPaint(
+                          size: Size(constraints.maxWidth, 140),
+                          painter: _StressChartPainter(_stressScores),
+                        ),
+                        ...List.generate(4, (i) {
+                          final x = i == 0
+                              ? 0.0
+                              : (i / 3) * constraints.maxWidth;
+                          final s = _stressScores[i];
+                          final y = 140 - (s / 100) * 140;
+                          return Positioned(
+                            left: x - 20,
+                            top: y - 20,
+                            width: 40,
+                            height: 40,
+                            child: GestureDetector(
+                              onTap: s > 0
+                                  ? () => _showStressDetail(i, s)
+                                  : null,
+                              behavior: HitTestBehavior.opaque,
+                            ),
+                          );
+                        }),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 12),
-            // Labels
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: weeks
-                  .map((w) => Text(
-                        w.label,
-                        style: TextStyle(
-                          fontFamily: 'NimbusSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF245A72).withValues(alpha: 0.45),
-                        ),
-                      ))
-                  .toList(),
+              children: const [
+                Text('Mg 1', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
+                Text('Mg 2', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
+                Text('Mg 3', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
+                Text('Mg 4', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
+              ],
             ),
           ],
         ),
@@ -388,17 +442,11 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  // ── Stress Detail Modal ─────────────────────────────────────────────────
-
-  void _showStressDetail(BuildContext context, WeeklyStressEntry entry) {
-    final level = entry.avgScore >= 60
-        ? 'Tinggi'
-        : entry.avgScore >= 40
-            ? 'Sedang'
-            : 'Rendah';
-    final levelColor = entry.avgScore >= 60
+  void _showStressDetail(int weekIdx, double score) {
+    final level = score >= 60 ? 'Tinggi' : score >= 40 ? 'Sedang' : 'Rendah';
+    final levelColor = score >= 60
         ? const Color(0xFFFB923C)
-        : entry.avgScore >= 40
+        : score >= 40
             ? const Color(0xFFFBBF24)
             : const Color(0xFF61D1DB);
 
@@ -415,18 +463,15 @@ class AnalyticsPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40,
-              height: 4,
+              width: 40, height: 4,
               decoration: BoxDecoration(
                 color: const Color(0xFF245A72).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             const SizedBox(height: 20),
-            // Score circle
             Container(
-              width: 80,
-              height: 80,
+              width: 80, height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -439,35 +484,26 @@ class AnalyticsPage extends StatelessWidget {
                 ),
               ),
               alignment: Alignment.center,
-              child: Text(
-                '${entry.avgScore.round()}',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: levelColor,
-                ),
-              ),
+              child: Text('${score.round()}',
+                  style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: levelColor)),
             ),
             const SizedBox(height: 16),
-            Text(
-              entry.label,
-              style: TextStyle(
-                fontFamily: 'NimbusSans',
-                fontSize: 13,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5),
-              ),
-            ),
+            Text('Minggu ${weekIdx + 1}',
+                style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 13,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5))),
             const SizedBox(height: 4),
-            Text(
-              'Skor Stress: ${entry.avgScore.round()}/100',
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF245A72),
-              ),
-            ),
+            Text('Skor Stress: ${score.round()}/100',
+                style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF245A72))),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -475,15 +511,12 @@ class AnalyticsPage extends StatelessWidget {
                 color: levelColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
-                'Level: $level',
-                style: TextStyle(
-                  fontFamily: 'NimbusSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: levelColor,
-                ),
-              ),
+              child: Text('Level: $level',
+                  style: TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: levelColor)),
             ),
             const SizedBox(height: 16),
           ],
@@ -492,24 +525,22 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  // ── Insights Card ─────────────────────────────────────────────────────────
-
   Widget _buildInsightsCard() {
-    final avgMood = DummyMoodHistory.last7Days
-            .fold(0, (sum, e) => sum + e.moodScore) /
-        DummyMoodHistory.last7Days.length;
-    final lastStress = DummyWeeklyStress.last4Weeks.last.avgScore;
+    final avgMood = _hasMoodData
+        ? _moodData.where((s) => s > 0).fold(0, (sum, s) => sum + s) /
+            _moodData.where((s) => s > 0).length
+        : 0.0;
+    final lastStress = _stressScores.lastWhere((s) => s > 0, orElse: () => 0);
 
     String insight;
-    if (lastStress < 45 && avgMood >= 3) {
-      insight =
-          'Stress level kamu menurun dan mood kamu stabil minggu ini. Pertahankan kebiasaan wellness kamu!';
+    if (!_hasMoodData && !_hasStressData) {
+      insight = 'Mulai isi mood harian dan stress assessment untuk melihat ringkasan kondisi kesehatan mentalmu di sini.';
+    } else if (lastStress < 45 && avgMood >= 3) {
+      insight = 'Stress level kamu menurun dan mood kamu stabil minggu ini. Pertahankan kebiasaan wellness kamu!';
     } else if (lastStress >= 60) {
-      insight =
-          'Stress level kamu cukup tinggi minggu ini. Coba luangkan waktu untuk meditasi dan istirahat yang cukup.';
+      insight = 'Stress level kamu cukup tinggi minggu ini. Coba luangkan waktu untuk meditasi dan istirahat yang cukup.';
     } else {
-      insight =
-          'Mood dan stress kamu dalam level moderate. Terus pantau kondisi kamu dan jangan ragu untuk meminta bantuan.';
+      insight = 'Mood dan stress kamu dalam level moderate. Terus pantau kondisi kamu dan jangan ragu untuk meminta bantuan.';
     }
 
     return Padding(
@@ -544,18 +575,16 @@ class AnalyticsPage extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.auto_awesome_outlined, size: 20, color: Colors.white),
+                  child: const Icon(Icons.auto_awesome_outlined,
+                      size: 20, color: Colors.white),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Insights',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
+                const Text('Insights',
+                    style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
               ],
             ),
             const SizedBox(height: 16),
@@ -573,76 +602,99 @@ class AnalyticsPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildEmptyChartState(String message) {
+    return SizedBox(
+      height: 100,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bar_chart_outlined, size: 32,
+                color: const Color(0xFF245A72).withValues(alpha: 0.15)),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 13,
+                color: const Color(0xFF245A72).withValues(alpha: 0.35),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-// ── Stress Line Chart Painter ────────────────────────────────────────────────
-
 class _StressChartPainter extends CustomPainter {
-  final List<WeeklyStressEntry> data;
+  final List<double> data;
   _StressChartPainter(this.data);
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
+    final validPoints = data.where((s) => s > 0).toList();
+    if (validPoints.length < 2) return;
 
     final points = <Offset>[];
-    final count = data.length;
-    for (var i = 0; i < count; i++) {
-      final x = (i / (count - 1)) * size.width;
-      final y = size.height - (data[i].avgScore / 100) * size.height;
+    for (var i = 0; i < data.length; i++) {
+      final x = i == 0 ? 0.0 : (i / (data.length - 1)) * size.width;
+      final y = data[i] > 0
+          ? size.height - (data[i] / 100) * size.height
+          : size.height;
       points.add(Offset(x, y));
     }
 
-    // Fill gradient
-    final fillPath = Path()..moveTo(points.first.dx, size.height);
-    for (final p in points) {
+    final activePoints = points.where((p) => p.dy < size.height).toList();
+    if (activePoints.length < 2) return;
+
+    final fillPath = Path()..moveTo(activePoints.first.dx, size.height);
+    for (final p in activePoints) {
       fillPath.lineTo(p.dx, p.dy);
     }
-    fillPath.lineTo(points.last.dx, size.height);
+    fillPath.lineTo(activePoints.last.dx, size.height);
     fillPath.close();
 
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF61D1DB).withValues(alpha: 0.3),
-          const Color(0xFF61D1DB).withValues(alpha: 0.02),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF61D1DB).withValues(alpha: 0.3),
+            const Color(0xFF61D1DB).withValues(alpha: 0.02),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
 
-    // Line
-    final linePaint = Paint()
-      ..color = const Color(0xFF61D1DB)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      final prev = points[i - 1];
-      final curr = points[i];
+    final linePath = Path()..moveTo(activePoints.first.dx, activePoints.first.dy);
+    for (var i = 1; i < activePoints.length; i++) {
+      final prev = activePoints[i - 1];
+      final curr = activePoints[i];
       final cpX = (prev.dx + curr.dx) / 2;
       linePath.cubicTo(cpX, prev.dy, cpX, curr.dy, curr.dx, curr.dy);
     }
-    canvas.drawPath(linePath, linePaint);
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = const Color(0xFF61D1DB)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
 
-    // Dots + score labels
-    for (var i = 0; i < points.length; i++) {
-      final p = points[i];
-      canvas.drawCircle(
-        p,
-        8,
-        Paint()..color = const Color(0xFF61D1DB).withValues(alpha: 0.15),
-      );
+    for (final p in activePoints) {
+      canvas.drawCircle(p, 8, Paint()..color = const Color(0xFF61D1DB).withValues(alpha: 0.15));
       canvas.drawCircle(p, 5, Paint()..color = Colors.white);
       canvas.drawCircle(p, 3.5, Paint()..color = const Color(0xFF61D1DB));
 
+      final score = 100 - ((p.dy / size.height) * 100);
       final tp = TextPainter(
         text: TextSpan(
-          text: '${data[i].avgScore.round()}',
+          text: '${score.round()}',
           style: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 10,

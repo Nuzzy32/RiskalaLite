@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
+import '../../services/api_service.dart';
 import 'hr_report_detail_page.dart';
 
 class HrReportPage extends StatefulWidget {
@@ -10,30 +10,160 @@ class HrReportPage extends StatefulWidget {
   State<HrReportPage> createState() => _HrReportPageState();
 }
 
-class _HrReportPageState extends State<HrReportPage> {
+class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   String _selectedDivision = 'All';
   String _selectedRisk = 'All';
+  DateTimeRange? _dateRange;
 
-  // Dummy submission data
-  static final List<_Submission> _allSubmissions = DummyStressData.allStressData.map((e) {
-    // Generate a dummy date based on index
-    final idx = DummyStressData.allStressData.indexOf(e);
-    final day = 28 - (idx % 10);
-    final month = day > 20 ? 'Oct' : 'Oct';
-    return _Submission(
-      name: e.name.split(' ').first.toUpperCase(),
-      division: e.division,
-      riskLevel: e.stressLevel,
-      date: '$month $day',
-    );
-  }).toList();
+  bool _loading = true;
+  String? _error;
+
+  List<_Submission> _allSubmissions = [];
+  List<_EmployeeReport> _allEmployeeReports = [];
+  List<String> _divisions = ['All'];
+
+  static const _categories = {
+    1: 'Beban Kerja Berlebihan',
+    2: 'Konflik dengan Rekan Kerja',
+    3: 'Masalah Manajemen',
+    4: 'Work-Life Balance',
+    5: 'Lingkungan Kerja',
+    6: 'Lainnya',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final assessments = await ApiService.getAssessmentHistory();
+      final reports = await ApiService.getReports();
+
+      final divisionsSet = <String>{};
+
+      _allSubmissions = assessments.map((a) {
+        final user = a['user'] as Map<String, dynamic>?;
+        final division = user?['department']?.toString() ?? '-';
+        divisionsSet.add(division);
+        return _Submission(
+          idUser: a['id_user']?.toString() ?? '',
+          name: (user?['nama_user']?.toString().split(' ').first ?? '-').toUpperCase(),
+          fullName: user?['nama_user']?.toString() ?? '-',
+          division: division,
+          totalScore: (a['total_score'] as num?)?.toInt() ?? 0,
+          kategoriStres: (a['kategori_stres'] as num?)?.toInt() ?? 1,
+          date: DateTime.tryParse(a['tgl_SA']?.toString() ?? '') ?? DateTime.now(),
+        );
+      }).toList();
+
+      _allEmployeeReports = reports.map((r) {
+        final user = r['user'] as Map<String, dynamic>?;
+        final division = user?['department']?.toString() ?? '-';
+        divisionsSet.add(division);
+        return _EmployeeReport(
+          idReport: r['id_report']?.toString() ?? '',
+          idUser: r['id_user']?.toString() ?? '',
+          employeeName: user?['nama_user']?.toString() ?? '-',
+          division: division,
+          kategori: (r['kategori'] as num?)?.toInt() ?? 6,
+          deskripsi: r['deskripsi']?.toString() ?? '',
+          tingkatStres: (r['tingkat_stres'] as num?)?.toInt() ?? 1,
+          status: r['status']?.toString() ?? 'pending',
+          hrResponse: r['hr_response']?.toString(),
+          date: DateTime.tryParse(r['tgl_IR']?.toString() ?? '') ?? DateTime.now(),
+        );
+      }).toList();
+
+      _divisions = ['All', ...divisionsSet.toList()..sort()];
+
+      setState(() => _loading = false);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
+  String _riskFromKategori(int k) {
+    if (k >= 3) return 'high';
+    if (k == 2) return 'moderate';
+    return 'low';
+  }
+
+  String _riskFromStress(int s) {
+    if (s >= 4) return 'high';
+    if (s == 3) return 'moderate';
+    return 'low';
+  }
 
   List<_Submission> get _filteredSubmissions {
     return _allSubmissions.where((s) {
       if (_selectedDivision != 'All' && s.division != _selectedDivision) return false;
-      if (_selectedRisk != 'All' && s.riskLevel != _selectedRisk) return false;
+      if (_selectedRisk != 'All' && _riskFromKategori(s.kategoriStres) != _selectedRisk) return false;
+      if (_dateRange != null) {
+        if (s.date.isBefore(_dateRange!.start) || s.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) return false;
+      }
       return true;
     }).toList();
+  }
+
+  List<_EmployeeReport> get _filteredEmployeeReports {
+    return _allEmployeeReports.where((r) {
+      if (_selectedDivision != 'All' && r.division != _selectedDivision) return false;
+      if (_selectedRisk != 'All' && _riskFromStress(r.tingkatStres) != _selectedRisk) return false;
+      if (_dateRange != null) {
+        if (r.date.isBefore(_dateRange!.start) || r.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  String _formatDate(DateTime d) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[d.month - 1]} ${d.day}';
+  }
+
+  Future<void> _pickDateRange() async {
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2027, 12, 31),
+      initialDateRange: _dateRange ?? DateTimeRange(
+        start: DateTime.now().subtract(const Duration(days: 30)),
+        end: DateTime.now(),
+      ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF245A72),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (result != null) setState(() => _dateRange = result);
   }
 
   @override
@@ -42,21 +172,49 @@ class _HrReportPageState extends State<HrReportPage> {
       backgroundColor: const Color(0xFFF8FAFB),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 140),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildFilters(),
-              const SizedBox(height: 12),
-              _buildDateRange(),
-              const SizedBox(height: 32),
-              _buildSubmissionsTable(),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 16),
+            _buildFilters(),
+            const SizedBox(height: 12),
+            _buildDateRange(),
+            const SizedBox(height: 16),
+            _buildTabs(),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                  : _error != null
+                      ? _buildErrorState()
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildQuestionnaireTab(),
+                              _buildLaporanEmployeeTab(),
+                            ],
+                          ),
+                        ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFF9D174D)),
+          const SizedBox(height: 12),
+          Text(_error ?? 'Terjadi kesalahan',
+              style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+          const SizedBox(height: 12),
+          ElevatedButton(onPressed: _loadData, child: const Text('Coba lagi')),
+        ],
       ),
     );
   }
@@ -128,24 +286,21 @@ class _HrReportPageState extends State<HrReportPage> {
   }
 
   Widget _buildFilters() {
-    final divisions = ['All', ...DummyStressData.divisions];
     final risks = ['All', 'low', 'moderate', 'high'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          // Division filter
           Expanded(
             child: _buildDropdown(
               label: 'Filter by Divisi',
               value: _selectedDivision,
-              items: divisions,
+              items: _divisions,
               onChanged: (v) => setState(() => _selectedDivision = v ?? 'All'),
             ),
           ),
           const SizedBox(width: 12),
-          // Risk filter
           Expanded(
             child: _buildDropdown(
               label: 'Filter by Risk Level',
@@ -167,6 +322,7 @@ class _HrReportPageState extends State<HrReportPage> {
     Map<String, String>? displayMap,
     required ValueChanged<String?> onChanged,
   }) {
+    final safeValue = items.contains(value) ? value : items.first;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
@@ -176,7 +332,7 @@ class _HrReportPageState extends State<HrReportPage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: safeValue,
           isExpanded: true,
           icon: Icon(Icons.keyboard_arrow_down, color: const Color(0xFF245A72).withValues(alpha: 0.5), size: 20),
           style: const TextStyle(
@@ -187,7 +343,7 @@ class _HrReportPageState extends State<HrReportPage> {
           ),
           items: items.map((item) {
             final display = displayMap?[item] ?? item;
-            return DropdownMenuItem(value: item, child: Text(display));
+            return DropdownMenuItem(value: item, child: Text(display, overflow: TextOverflow.ellipsis));
           }).toList(),
           onChanged: onChanged,
         ),
@@ -196,59 +352,114 @@ class _HrReportPageState extends State<HrReportPage> {
   }
 
   Widget _buildDateRange() {
+    final hasRange = _dateRange != null;
+    final label = hasRange
+        ? '${_formatDate(_dateRange!.start)} – ${_formatDate(_dateRange!.end)}'
+        : 'Pilih Rentang Tanggal';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: _pickDateRange,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: hasRange ? const Color(0xFFE0F2F4) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasRange ? const Color(0xFF61D1DB) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 18,
+                  color: const Color(0xFF245A72).withValues(alpha: hasRange ? 0.8 : 0.5)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF245A72).withValues(alpha: hasRange ? 1.0 : 0.5),
+                  ),
+                ),
+              ),
+              if (hasRange)
+                GestureDetector(
+                  onTap: () => setState(() => _dateRange = null),
+                  child: Icon(Icons.close, size: 16,
+                      color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+                )
+              else
+                Icon(Icons.keyboard_arrow_down, size: 20,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFE8F4F6),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today_outlined, size: 18, color: const Color(0xFF245A72).withValues(alpha: 0.5)),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Date Range: Oct 1 – Oct 31, 2023',
-                style: TextStyle(
-                  fontFamily: 'NimbusSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF245A72),
-                ),
-              ),
-            ),
-            Icon(Icons.keyboard_arrow_down, size: 20, color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+        child: TabBar(
+          controller: _tabController,
+          indicator: BoxDecoration(
+            color: const Color(0xFF245A72),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelColor: Colors.white,
+          unselectedLabelColor: const Color(0xFF245A72),
+          labelStyle: const TextStyle(
+            fontFamily: 'NimbusSans',
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontFamily: 'NimbusSans',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          dividerColor: Colors.transparent,
+          tabs: const [
+            Tab(text: 'Questionnaire'),
+            Tab(text: 'Laporan Employee'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSubmissionsTable() {
+  Widget _buildQuestionnaireTab() {
     final submissions = _filteredSubmissions;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 140),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Questionnaire\nSubmissions',
+          Text(
+            '${submissions.length} Submission',
             style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF245A72),
-              height: 1.3,
+              fontFamily: 'NimbusSans',
+              fontSize: 13,
+              color: const Color(0xFF245A72).withValues(alpha: 0.5),
             ),
           ),
-          const SizedBox(height: 20),
-          // Table header
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
                 _tableHeader('EMPLOYEE', flex: 3),
@@ -258,9 +469,62 @@ class _HrReportPageState extends State<HrReportPage> {
               ],
             ),
           ),
-          // Table rows
-          ...submissions.map((s) => _buildSubmissionRow(s)),
+          if (submissions.isEmpty)
+            _buildEmptyState('Tidak ada data questionnaire\nsesuai filter yang dipilih')
+          else
+            ...submissions.map((s) => _buildSubmissionRow(s)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLaporanEmployeeTab() {
+    final reports = _filteredEmployeeReports;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 140),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${reports.length} Laporan',
+            style: TextStyle(
+              fontFamily: 'NimbusSans',
+              fontSize: 13,
+              color: const Color(0xFF245A72).withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (reports.isEmpty)
+            _buildEmptyState('Tidak ada laporan\nsesuai filter yang dipilih')
+          else
+            ...reports.map((r) => _buildEmployeeReportCard(r)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.inbox_outlined, size: 48,
+                color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 14,
+                color: const Color(0xFF245A72).withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -284,17 +548,15 @@ class _HrReportPageState extends State<HrReportPage> {
   Widget _buildSubmissionRow(_Submission s) {
     return GestureDetector(
       onTap: () {
-        // Find the matching stress data
-        final stressData = DummyStressData.allStressData.firstWhere(
-          (e) => e.name.split(' ').first.toUpperCase() == s.name && e.division == s.division,
-          orElse: () => DummyStressData.allStressData.first,
-        );
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => HrReportDetailPage(
-              employee: stressData,
-              reportDate: s.date,
+              employeeName: s.fullName,
+              division: s.division,
+              riskLevel: _riskFromKategori(s.kategoriStres),
+              stressScore: ((s.totalScore / 50) * 100).clamp(0, 100).round(),
+              reportDate: _formatDate(s.date),
             ),
           ),
         );
@@ -331,14 +593,11 @@ class _HrReportPageState extends State<HrReportPage> {
                 ),
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: _buildRiskBadge(s.riskLevel),
-            ),
+            Expanded(flex: 2, child: _buildRiskBadge(_riskFromKategori(s.kategoriStres))),
             Expanded(
               flex: 2,
               child: Text(
-                s.date,
+                _formatDate(s.date),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'NimbusSans',
@@ -347,6 +606,189 @@ class _HrReportPageState extends State<HrReportPage> {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmployeeReportCard(_EmployeeReport r) {
+    Color statusBg;
+    Color statusColor;
+    String statusLabel;
+    switch (r.status) {
+      case 'selesai':
+        statusBg = const Color(0xFFDCFCE7);
+        statusColor = const Color(0xFF166534);
+        statusLabel = 'Selesai';
+      case 'proses':
+        statusBg = const Color(0xFFFEF9C3);
+        statusColor = const Color(0xFF854D0E);
+        statusLabel = 'Diproses';
+      default:
+        statusBg = const Color(0xFFFCE7F3);
+        statusColor = const Color(0xFF9D174D);
+        statusLabel = 'Pending';
+    }
+
+    return GestureDetector(
+      onTap: () async {
+        final updated = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HrReportDetailPage(
+              employeeName: r.employeeName,
+              division: r.division,
+              riskLevel: _riskFromStress(r.tingkatStres),
+              stressScore: (r.tingkatStres * 20).clamp(0, 100),
+              reportDate: _formatDate(r.date),
+              reportId: r.idReport,
+              kategori: _categories[r.kategori] ?? 'Lainnya',
+              deskripsi: r.deskripsi,
+              status: r.status,
+              hrResponse: r.hrResponse,
+              tingkatStres: r.tingkatStres,
+            ),
+          ),
+        );
+        if (updated == true) _loadData();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF245A72).withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.employeeName,
+                        style: const TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF245A72),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        r.division,
+                        style: TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 12,
+                          color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F2F4),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _categories[r.kategori] ?? 'Lainnya',
+                    style: const TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF245A72),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  _formatDate(r.date),
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 12,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              r.deskripsi,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 13,
+                height: 1.5,
+                color: const Color(0xFF245A72).withValues(alpha: 0.7),
+              ),
+            ),
+            if (r.hrResponse != null && r.hrResponse!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.reply, size: 14, color: Color(0xFF166534)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        r.hrResponse!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 12,
+                          color: Color(0xFF166534),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -401,14 +843,45 @@ class _HrReportPageState extends State<HrReportPage> {
 }
 
 class _Submission {
+  final String idUser;
   final String name;
+  final String fullName;
   final String division;
-  final String riskLevel;
-  final String date;
+  final int totalScore;
+  final int kategoriStres;
+  final DateTime date;
   const _Submission({
+    required this.idUser,
     required this.name,
+    required this.fullName,
     required this.division,
-    required this.riskLevel,
+    required this.totalScore,
+    required this.kategoriStres,
+    required this.date,
+  });
+}
+
+class _EmployeeReport {
+  final String idReport;
+  final String idUser;
+  final String employeeName;
+  final String division;
+  final int kategori;
+  final String deskripsi;
+  final int tingkatStres;
+  final String status;
+  final String? hrResponse;
+  final DateTime date;
+  const _EmployeeReport({
+    required this.idReport,
+    required this.idUser,
+    required this.employeeName,
+    required this.division,
+    required this.kategori,
+    required this.deskripsi,
+    required this.tingkatStres,
+    required this.status,
+    required this.hrResponse,
     required this.date,
   });
 }

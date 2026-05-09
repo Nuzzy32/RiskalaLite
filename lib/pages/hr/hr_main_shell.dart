@@ -3,7 +3,7 @@ import '../../widgets/bottom_nav.dart';
 import 'hr_home_page.dart';
 import 'hr_employees_page.dart';
 import 'hr_report_page.dart';
-import '../employee/profile_page.dart';
+import 'hr_profile_page.dart';
 
 class HrMainShell extends StatefulWidget {
   final int initialTab;
@@ -76,7 +76,7 @@ class _HrMainShellState extends State<HrMainShell> {
       case 2:
         return const HrReportPage(key: ValueKey('report'), showNav: false);
       case 3:
-        return const ProfilePage(key: ValueKey('profile'), showNav: false);
+        return const HrProfilePage(key: ValueKey('profile'), showNav: false);
       default:
         return const HrHomePage(key: ValueKey('hr_home'), showNav: false);
     }

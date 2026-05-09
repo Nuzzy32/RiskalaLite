@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/dummy_data.dart';
-import '../../widgets/bottom_nav.dart';
+import '../../services/api_service.dart';
 
 class HrHomePage extends StatefulWidget {
   final bool showNav;
@@ -11,11 +11,40 @@ class HrHomePage extends StatefulWidget {
 }
 
 class _HrHomePageState extends State<HrHomePage> {
-  void _navigateTo(String id) {
-    if (id == 'report') {
-      Navigator.pushReplacementNamed(context, '/hr/report');
-    } else if (id == 'account') {
-      Navigator.pushReplacementNamed(context, '/hr/profile');
+  bool _loading = true;
+  String? _error;
+  int _totalEmployees = 0;
+  Map<String, double> _divisionStress = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final employees = await ApiService.getEmployees();
+      final divisions = await ApiService.getStressDivisions();
+
+      final stressMap = <String, double>{};
+      for (final d in divisions) {
+        final name = d['division']?.toString() ?? '';
+        final avg = (d['avg_score'] as num?)?.toDouble() ?? 0;
+        stressMap[name] = (avg / 50).clamp(0.0, 1.0);
+      }
+
+      setState(() {
+        _totalEmployees = employees.length;
+        _divisionStress = stressMap;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.toString().replaceAll('Exception: ', '');
+      });
     }
   }
 
@@ -23,111 +52,55 @@ class _HrHomePageState extends State<HrHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
-      body: Stack(
-        children: [
-          // Scrollable content
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                _buildHeader(),
-                // Main content
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 25),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              if (_error != null)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCE7F3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      _buildHeroMetricCard(),
-                      const SizedBox(height: 32),
-                      _buildStressLevelsSection(),
+                      const Icon(Icons.error_outline, color: Color(0xFF9D174D), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(_error!,
+                            style: const TextStyle(
+                                fontFamily: 'NimbusSans',
+                                fontSize: 13,
+                                color: Color(0xFF9D174D))),
+                      ),
+                      GestureDetector(
+                        onTap: _loadData,
+                        child: const Text('Retry',
+                            style: TextStyle(
+                                fontFamily: 'NimbusSans',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF9D174D))),
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          // Bottom Nav
-          if (widget.showNav)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: BottomNav(active: 'dashboard', onTap: _navigateTo, items: BottomNav.hrItems),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF245A72).withValues(alpha: 0.1),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
-            spreadRadius: -5,
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-          child: Row(
-            children: [
-              // Title section
-              Expanded(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 25),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'RISKALA LITE',
-                      style: TextStyle(
-                        fontFamily: 'NimbusSans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF61D1DB),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    Text(
-                      'HR DASHBOARD',
-                      style: TextStyle(
-                        fontFamily: 'NimbusSans',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF245A72),
-                      ),
-                    ),
+                  children: [
+                    _buildHeroMetricCard(),
+                    const SizedBox(height: 32),
+                    _buildStressLevelsSection(),
                   ],
-                ),
-              ),
-              // Search button
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  Icons.search,
-                  size: 24,
-                  color: const Color(0xFF245A72),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Avatar
-              ClipOval(
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  color: const Color(0xFFE0F2F4),
-                  child: const Icon(Icons.person, color: Color(0xFF245A72), size: 20),
                 ),
               ),
             ],
@@ -137,94 +110,138 @@ class _HrHomePageState extends State<HrHomePage> {
     );
   }
 
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'RISKALA LITE',
+                style: TextStyle(
+                  fontFamily: 'NimbusSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'HR DASHBOARD',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF245A72),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.search, size: 20,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.6)),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F2F4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person, size: 20, color: Color(0xFF245A72)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeroMetricCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
         gradient: const LinearGradient(
           begin: Alignment(-0.7, -1),
           end: Alignment(0.7, 1),
           colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
         ),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+            color: const Color(0xFF61D1DB).withValues(alpha: 0.25),
             blurRadius: 25,
             offset: const Offset(0, 10),
             spreadRadius: -5,
           ),
         ],
       ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Decorative circle
-          Positioned(
-            top: -64,
-            right: -64,
-            child: Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          // Content
-          Column(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Text content
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Opacity(
-                        opacity: 0.9,
-                        child: Text(
-                          'TOTAL EMPLOYEES',
-                          style: TextStyle(
+                  Opacity(
+                    opacity: 0.9,
+                    child: const Text(
+                      'TOTAL EMPLOYEES',
+                      style: TextStyle(
+                        fontFamily: 'NimbusSans',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _loading
+                      ? const SizedBox(
+                          height: 48,
+                          child: Center(child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2)))
+                      : Text(
+                          '$_totalEmployees',
+                          style: const TextStyle(
                             fontFamily: 'NimbusSans',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
-                            letterSpacing: 0.35,
+                            height: 1,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${DummyStressData.totalEmployees}',
-                        style: const TextStyle(
-                          fontFamily: 'NimbusSans',
-                          fontSize: 48,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Icon container
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Icon(
-                      Icons.groups,
-                      size: 32,
-                      color: Colors.white,
-                    ),
-                  ),
                 ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Icon(Icons.groups, size: 32, color: Colors.white),
               ),
             ],
           ),
@@ -237,11 +254,10 @@ class _HrHomePageState extends State<HrHomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: const [
+          children: [
             Text(
               'Stress Levels Per Divisi',
               style: TextStyle(
@@ -263,7 +279,6 @@ class _HrHomePageState extends State<HrHomePage> {
           ],
         ),
         const SizedBox(height: 16),
-        // Chart card
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
@@ -281,22 +296,24 @@ class _HrHomePageState extends State<HrHomePage> {
           ),
           child: Column(
             children: [
-              // Chart labels
               _buildChartLabels(),
               const SizedBox(height: 24),
-              // Bars — driven by dummy data
-              ...() {
-                final avgStress = DummyStressData.divisionAvgStress;
-                final divisions = divisionInfoList.map((d) => d.name).toList();
-                final widgets = <Widget>[];
-                for (var i = 0; i < divisions.length; i++) {
-                  if (i > 0) widgets.add(const SizedBox(height: 20));
-                  final name = divisions[i];
-                  final score = (avgStress[name] ?? 0) / 100;
-                  widgets.add(_buildBarRow(name, score));
-                }
-                return widgets;
-              }(),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator(color: Color(0xFF245A72))),
+                )
+              else
+                ...() {
+                  final widgets = <Widget>[];
+                  for (var i = 0; i < divisionInfoList.length; i++) {
+                    if (i > 0) widgets.add(const SizedBox(height: 20));
+                    final name = divisionInfoList[i].name;
+                    final score = _divisionStress[name] ?? 0.0;
+                    widgets.add(_buildBarRow(name, score));
+                  }
+                  return widgets;
+                }(),
             ],
           ),
         ),
@@ -309,54 +326,24 @@ class _HrHomePageState extends State<HrHomePage> {
       children: [
         SizedBox(
           width: 80,
-          child: Text(
-            'DIVISION',
-            style: TextStyle(
-              fontFamily: 'NimbusSans',
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF245A72).withValues(alpha: 0.4),
-              letterSpacing: -0.5,
-            ),
-          ),
+          child: Text('DIVISION',
+              style: TextStyle(
+                  fontFamily: 'NimbusSans', fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                  letterSpacing: -0.5)),
         ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'LOW',
+              children: ['LOW', 'MODERATE', 'HIGH'].map((l) => Text(l,
                   style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  'MODERATE',
-                  style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  'HIGH',
-                  style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
+                      fontFamily: 'NimbusSans', fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                      letterSpacing: -0.5))).toList(),
             ),
           ),
         ),
@@ -370,24 +357,15 @@ class _HrHomePageState extends State<HrHomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              division,
-              style: const TextStyle(
-                fontFamily: 'NimbusSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF245A72),
-              ),
-            ),
-            Text(
-              '${(percentage * 100).round()}%',
-              style: TextStyle(
-                fontFamily: 'NimbusSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5),
-              ),
-            ),
+            Text(division,
+                style: const TextStyle(
+                    fontFamily: 'NimbusSans', fontSize: 12,
+                    fontWeight: FontWeight.w700, color: Color(0xFF245A72))),
+            Text('${(percentage * 100).round()}%',
+                style: TextStyle(
+                    fontFamily: 'NimbusSans', fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5))),
           ],
         ),
         const SizedBox(height: 4),
@@ -395,9 +373,8 @@ class _HrHomePageState extends State<HrHomePage> {
           height: 12,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(9999),
-          ),
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(9999)),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
             widthFactor: percentage,
@@ -405,8 +382,7 @@ class _HrHomePageState extends State<HrHomePage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(9999),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
-                ),
+                    colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)]),
               ),
             ),
           ),
