@@ -1,9 +1,16 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  /// Base URL bisa di-override via:
+  ///   flutter run --dart-define=API_BASE_URL=http://192.168.1.x:8000/api
+  /// Default = localhost (cocok untuk iOS Simulator & Android emulator dengan adb reverse).
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000/api',
+  );
   static const _timeout = Duration(seconds: 10);
   static const _kTokenKey = 'auth_token';
   static const _kUserKey = 'auth_user';
@@ -25,7 +32,9 @@ class ApiService {
     if (userStr != null) {
       try {
         _currentUser = Map<String, dynamic>.from(jsonDecode(userStr));
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[ApiService] Failed to restore user from prefs: $e');
+      }
     }
   }
 
@@ -103,7 +112,9 @@ class ApiService {
   static Future<void> logout() async {
     try {
       await _post(Uri.parse('$baseUrl/auth/logout'));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[ApiService] Logout API call failed (ignoring): $e');
+    }
     _token = null;
     _currentUser = null;
     await _clearSession();
@@ -201,8 +212,20 @@ class ApiService {
 
   // ── Stress (HR) ───────────────────────────────────────────────────────────
 
-  static Future<List<Map<String, dynamic>>> getStressDivisions() async {
-    final res = await _get(Uri.parse('$baseUrl/stress/divisions'));
+  static Future<List<Map<String, dynamic>>> getStressDivisions({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final params = <String, String>{};
+    String fmt(DateTime d) =>
+        '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    if (startDate != null) params['start_date'] = fmt(startDate);
+    if (endDate != null) params['end_date'] = fmt(endDate);
+
+    final uri = Uri.parse('$baseUrl/stress/divisions')
+        .replace(queryParameters: params.isEmpty ? null : params);
+
+    final res = await _get(uri);
     final body = jsonDecode(res.body);
     return List<Map<String, dynamic>>.from(body['data'] ?? []);
   }
@@ -220,6 +243,47 @@ class ApiService {
     final res = await _get(Uri.parse('$baseUrl/departments'));
     final body = jsonDecode(res.body);
     return List<Map<String, dynamic>>.from(body['data'] ?? []);
+  }
+
+  static Future<Map<String, dynamic>> updateEmployee(
+    String idUser, {
+    String? namaUser,
+    String? emailUser,
+    String? passwdUser,
+    int? idDepartment,
+    int? roleUser,
+  }) async {
+    final body = <String, dynamic>{};
+    if (namaUser != null) body['nama_user'] = namaUser;
+    if (emailUser != null) body['email_user'] = emailUser;
+    if (passwdUser != null && passwdUser.isNotEmpty) body['passwd_user'] = passwdUser;
+    if (idDepartment != null) body['id_department'] = idDepartment;
+    if (roleUser != null) body['role_user'] = roleUser;
+
+    final res = await _patch(
+      Uri.parse('$baseUrl/employees/$idUser'),
+      body: jsonEncode(body),
+    );
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      final errors = b['errors'] as Map?;
+      if (errors != null && errors.isNotEmpty) {
+        throw Exception(errors.values.first[0]);
+      }
+      throw Exception(b['message'] ?? 'Gagal memperbarui employee');
+    }
+    return jsonDecode(res.body);
+  }
+
+  static Future<void> deleteEmployee(String idUser) async {
+    final res = await http
+        .delete(Uri.parse('$baseUrl/employees/$idUser'), headers: _headers)
+        .timeout(_timeout);
+    _checkAuth(res);
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      throw Exception(b['message'] ?? 'Gagal menghapus employee');
+    }
   }
 
   static Future<Map<String, dynamic>> createEmployee({
@@ -248,6 +312,91 @@ class ApiService {
         throw Exception(errors.values.first[0]);
       }
       throw Exception(b['message'] ?? 'Gagal menambah employee');
+    }
+    return jsonDecode(res.body);
+  }
+
+  // ── Psikolog (HR) ─────────────────────────────────────────────────────────
+
+  static Future<List<Map<String, dynamic>>> getPsikologs() async {
+    final res = await _get(Uri.parse('$baseUrl/psikologs'));
+    final body = jsonDecode(res.body);
+    return List<Map<String, dynamic>>.from(body['data'] ?? []);
+  }
+
+  static Future<Map<String, dynamic>> createPsikolog({
+    required String nama,
+    required String email,
+    String? spesialisasi,
+    String? noTelp,
+  }) async {
+    final res = await _post(
+      Uri.parse('$baseUrl/psikologs'),
+      body: jsonEncode({
+        'nama': nama,
+        'email': email,
+        'spesialisasi': spesialisasi,
+        'no_telp': noTelp,
+      }),
+    );
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      final b = jsonDecode(res.body);
+      final errors = b['errors'] as Map?;
+      if (errors != null && errors.isNotEmpty) {
+        throw Exception(errors.values.first[0]);
+      }
+      throw Exception(b['message'] ?? 'Gagal menambah psikolog');
+    }
+    return jsonDecode(res.body);
+  }
+
+  static Future<Map<String, dynamic>> updatePsikolog(
+    int id, {
+    required String nama,
+    required String email,
+    String? spesialisasi,
+    String? noTelp,
+  }) async {
+    final res = await _patch(
+      Uri.parse('$baseUrl/psikologs/$id'),
+      body: jsonEncode({
+        'nama': nama,
+        'email': email,
+        'spesialisasi': spesialisasi,
+        'no_telp': noTelp,
+      }),
+    );
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      final errors = b['errors'] as Map?;
+      if (errors != null && errors.isNotEmpty) {
+        throw Exception(errors.values.first[0]);
+      }
+      throw Exception(b['message'] ?? 'Gagal memperbarui psikolog');
+    }
+    return jsonDecode(res.body);
+  }
+
+  static Future<void> deletePsikolog(int id) async {
+    final res = await http
+        .delete(Uri.parse('$baseUrl/psikologs/$id'), headers: _headers)
+        .timeout(_timeout);
+    _checkAuth(res);
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      throw Exception(b['message'] ?? 'Gagal menghapus psikolog');
+    }
+  }
+
+  static Future<Map<String, dynamic>> assignPsikolog(
+      String reportId, int psikologId) async {
+    final res = await _patch(
+      Uri.parse('$baseUrl/reports/$reportId'),
+      body: jsonEncode({'psikolog_id': psikologId}),
+    );
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      throw Exception(b['message'] ?? 'Gagal menugaskan psikolog');
     }
     return jsonDecode(res.body);
   }

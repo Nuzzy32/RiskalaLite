@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/notification_service.dart';
 import 'hr_add_employee_page.dart';
+import 'hr_psikolog_list_page.dart';
 
 class HrProfilePage extends StatefulWidget {
   final bool showNav;
@@ -11,9 +13,35 @@ class HrProfilePage extends StatefulWidget {
 }
 
 class _HrProfilePageState extends State<HrProfilePage> {
-  bool _dailyReminder = true;
+  bool _dailyReminder = false;
 
   String get _hrName => ApiService.userName.isNotEmpty ? ApiService.userName : 'HR';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderState();
+  }
+
+  Future<void> _loadReminderState() async {
+    final enabled = await NotificationService.isEnabled();
+    if (mounted) setState(() => _dailyReminder = enabled);
+  }
+
+  Future<void> _toggleReminder(bool v) async {
+    setState(() => _dailyReminder = v);
+    await NotificationService.setEnabled(v);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(v
+            ? 'Pengingat aktif (jam 09:00)'
+            : 'Pengingat dimatikan'),
+        backgroundColor: const Color(0xFF166534),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +245,81 @@ class _HrProfilePageState extends State<HrProfilePage> {
                           ),
                         ),
 
+                        const SizedBox(height: 12),
+
+                        // Kelola Psikolog card
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HrPsikologListPage(),
+                            ),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF245A72).withValues(alpha: 0.04),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF61D1DB).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.psychology_outlined,
+                                    color: Color(0xFF245A72),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Kelola Psikolog',
+                                        style: TextStyle(
+                                          fontFamily: 'Public Sans',
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF245A72),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Tambah, edit, atau hapus data psikolog',
+                                        style: TextStyle(
+                                          fontFamily: 'Public Sans',
+                                          fontSize: 12,
+                                          color: const Color(0xFF245A72).withValues(alpha: 0.55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: const Color(0xFF245A72).withValues(alpha: 0.3),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                         const SizedBox(height: 28),
 
                         Padding(
@@ -283,7 +386,7 @@ class _HrProfilePageState extends State<HrProfilePage> {
                                     ),
                                     Switch(
                                       value: _dailyReminder,
-                                      onChanged: (v) => setState(() => _dailyReminder = v),
+                                      onChanged: _toggleReminder,
                                       activeThumbColor: Colors.white,
                                       activeTrackColor: const Color(0xFF61D1DB),
                                       inactiveThumbColor: Colors.white,

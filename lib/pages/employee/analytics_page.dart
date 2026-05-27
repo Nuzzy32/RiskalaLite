@@ -39,7 +39,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
       _buildMoodData(moods);
       _buildStressData(assessments);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AnalyticsPage] Failed to load data: $e');
+    }
 
     setState(() => _loading = false);
   }
@@ -83,13 +85,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   static const _days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
   IconData _moodIcon(int score) => switch (score) {
-        4 => Icons.sentiment_very_satisfied,
-        3 => Icons.sentiment_satisfied,
-        2 => Icons.sentiment_neutral,
-        _ => Icons.sentiment_dissatisfied,
+        5 => Icons.sentiment_very_satisfied,
+        4 => Icons.sentiment_satisfied,
+        3 => Icons.sentiment_neutral,
+        2 => Icons.sentiment_dissatisfied,
+        _ => Icons.sentiment_very_dissatisfied,
       };
 
   Color _moodColor(int score) => switch (score) {
+        5 => const Color(0xFF22C55E),
         4 => const Color(0xFF61D1DB),
         3 => const Color(0xFF60A5FA),
         2 => const Color(0xFFFBBF24),
@@ -97,10 +101,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       };
 
   String _moodLabel(int score) => switch (score) {
-        4 => 'Sangat Baik',
-        3 => 'Baik',
-        2 => 'Netral',
-        _ => 'Kurang Baik',
+        5 => 'Sangat Baik',
+        4 => 'Baik',
+        3 => 'Netral',
+        2 => 'Kurang Baik',
+        _ => 'Stres',
       };
 
   @override
@@ -213,7 +218,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   children: List.generate(7, (i) {
                     final score = _moodData[i];
                     final hasData = score > 0;
-                    final fraction = hasData ? score / 4 : 0.1;
+                    final fraction = hasData ? score / 5 : 0.1;
                     return Expanded(
                       child: GestureDetector(
                         onTap: hasData
@@ -327,7 +332,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 color: _moodColor(score).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text('Skor: $score/4',
+              child: Text('Skor: $score/5',
                   style: TextStyle(
                       fontFamily: 'NimbusSans',
                       fontSize: 13,

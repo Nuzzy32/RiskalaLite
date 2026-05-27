@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
+import '../../data/division_info.dart';
 import '../../services/api_service.dart';
 
 class HrHomePage extends StatefulWidget {
@@ -15,6 +15,7 @@ class _HrHomePageState extends State<HrHomePage> {
   String? _error;
   int _totalEmployees = 0;
   Map<String, double> _divisionStress = {};
+  DateTimeRange? _dateRange;
 
   @override
   void initState() {
@@ -26,7 +27,10 @@ class _HrHomePageState extends State<HrHomePage> {
     setState(() { _loading = true; _error = null; });
     try {
       final employees = await ApiService.getEmployees();
-      final divisions = await ApiService.getStressDivisions();
+      final divisions = await ApiService.getStressDivisions(
+        startDate: _dateRange?.start,
+        endDate: _dateRange?.end,
+      );
 
       final stressMap = <String, double>{};
       for (final d in divisions) {
@@ -46,6 +50,43 @@ class _HrHomePageState extends State<HrHomePage> {
         _error = e.toString().replaceAll('Exception: ', '');
       });
     }
+  }
+
+  Future<void> _pickDateRange() async {
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2027, 12, 31),
+      initialDateRange: _dateRange ??
+          DateTimeRange(
+            start: DateTime.now().subtract(const Duration(days: 30)),
+            end: DateTime.now(),
+          ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF245A72),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (result != null) {
+      setState(() => _dateRange = result);
+      _loadData();
+    }
+  }
+
+  void _clearDateRange() {
+    setState(() => _dateRange = null);
+    _loadData();
+  }
+
+  String _formatDate(DateTime d) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[d.month - 1]} ${d.day}';
   }
 
   @override
@@ -250,6 +291,59 @@ class _HrHomePageState extends State<HrHomePage> {
     );
   }
 
+  Widget _buildDateFilter() {
+    final hasRange = _dateRange != null;
+    final label = hasRange
+        ? '${_formatDate(_dateRange!.start)} – ${_formatDate(_dateRange!.end)}'
+        : 'Filter Rentang Tanggal';
+
+    return GestureDetector(
+      onTap: _pickDateRange,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: hasRange ? const Color(0xFFE0F2F4) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: hasRange
+                  ? const Color(0xFF61D1DB)
+                  : const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_outlined,
+                size: 16,
+                color: const Color(0xFF245A72)
+                    .withValues(alpha: hasRange ? 0.8 : 0.5)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'NimbusSans', fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF245A72)
+                      .withValues(alpha: hasRange ? 1.0 : 0.55),
+                ),
+              ),
+            ),
+            if (hasRange)
+              GestureDetector(
+                onTap: _clearDateRange,
+                child: Icon(Icons.close,
+                    size: 16,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+              )
+            else
+              Icon(Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStressLevelsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,6 +372,8 @@ class _HrHomePageState extends State<HrHomePage> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _buildDateFilter(),
         const SizedBox(height: 16),
         Container(
           width: double.infinity,

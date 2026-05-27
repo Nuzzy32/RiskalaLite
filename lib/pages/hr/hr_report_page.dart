@@ -87,6 +87,9 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
           tingkatStres: (r['tingkat_stres'] as num?)?.toInt() ?? 1,
           status: r['status']?.toString() ?? 'pending',
           hrResponse: r['hr_response']?.toString(),
+          psikolog: r['psikolog'] is Map<String, dynamic>
+              ? r['psikolog'] as Map<String, dynamic>
+              : null,
           date: DateTime.tryParse(r['tgl_IR']?.toString() ?? '') ?? DateTime.now(),
         );
       }).toList();
@@ -648,6 +651,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               status: r.status,
               hrResponse: r.hrResponse,
               tingkatStres: r.tingkatStres,
+              psikolog: r.psikolog,
             ),
           ),
         );
@@ -758,7 +762,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 color: const Color(0xFF245A72).withValues(alpha: 0.7),
               ),
             ),
-            if (r.hrResponse != null && r.hrResponse!.isNotEmpty) ...[
+            if (r.psikolog != null) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
@@ -770,19 +774,32 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.reply, size: 14, color: Color(0xFF166534)),
+                    const Icon(Icons.psychology_outlined,
+                        size: 14, color: Color(0xFF166534)),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        r.hrResponse!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'NimbusSans',
-                          fontSize: 12,
-                          color: Color(0xFF166534),
-                          height: 1.4,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ditangani: ${r.psikolog!['nama'] ?? '-'}',
+                            style: const TextStyle(
+                              fontFamily: 'NimbusSans',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                          if ((r.psikolog!['spesialisasi']?.toString().isNotEmpty ?? false))
+                            Text(
+                              r.psikolog!['spesialisasi'].toString(),
+                              style: TextStyle(
+                                fontFamily: 'NimbusSans',
+                                fontSize: 11,
+                                color: const Color(0xFF166534).withValues(alpha: 0.75),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
@@ -871,6 +888,7 @@ class _EmployeeReport {
   final int tingkatStres;
   final String status;
   final String? hrResponse;
+  final Map<String, dynamic>? psikolog;
   final DateTime date;
   const _EmployeeReport({
     required this.idReport,
@@ -882,6 +900,7 @@ class _EmployeeReport {
     required this.tingkatStres,
     required this.status,
     required this.hrResponse,
+    required this.psikolog,
     required this.date,
   });
 }

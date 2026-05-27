@@ -18,6 +18,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   late int _currentIndex;
   static const _tabIds = ['report', 'home', 'analytics', 'account'];
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       drawer: const CustomDrawer(),
       body: Stack(
         children: [
@@ -81,7 +83,11 @@ class _MainShellState extends State<MainShell> {
       case 3:
         return const ProfilePage(key: ValueKey('profile'), showNav: false);
       default:
-        return const HomePage(key: ValueKey('home'), showNav: false);
+        return HomePage(
+          key: const ValueKey('home'),
+          showNav: false,
+          onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+        );
     }
   }
 }

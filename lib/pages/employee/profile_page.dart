@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../services/notification_service.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool showNav;
@@ -10,7 +11,33 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  bool _dailyReminder = true;
+  bool _dailyReminder = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderState();
+  }
+
+  Future<void> _loadReminderState() async {
+    final enabled = await NotificationService.isEnabled();
+    if (mounted) setState(() => _dailyReminder = enabled);
+  }
+
+  Future<void> _toggleReminder(bool v) async {
+    setState(() => _dailyReminder = v);
+    await NotificationService.setEnabled(v);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(v
+            ? 'Pengingat mood harian aktif (jam 09:00)'
+            : 'Pengingat mood harian dimatikan'),
+        backgroundColor: const Color(0xFF166534),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   void _navigateTo(String id) {
     if (id == 'home') {
@@ -212,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   Switch(
                                     value: _dailyReminder,
-                                    onChanged: (v) => setState(() => _dailyReminder = v),
+                                    onChanged: _toggleReminder,
                                     activeThumbColor: Colors.white,
                                     activeTrackColor: const Color(0xFF61D1DB),
                                     inactiveThumbColor: Colors.white,

@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
 class HrAddEmployeePage extends StatefulWidget {
-  const HrAddEmployeePage({super.key});
+  final Map<String, dynamic>? employee;
+  const HrAddEmployeePage({super.key, this.employee});
 
   @override
   State<HrAddEmployeePage> createState() => _HrAddEmployeePageState();
 }
 
 class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
+  bool get _isEdit => widget.employee != null;
+
   final _formKey = GlobalKey<FormState>();
   final _idController = TextEditingController();
   final _namaController = TextEditingController();
@@ -27,6 +30,13 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
   @override
   void initState() {
     super.initState();
+    if (_isEdit) {
+      final emp = widget.employee!;
+      _idController.text = emp['id_user']?.toString() ?? '';
+      _namaController.text = emp['nama_user']?.toString() ?? '';
+      _emailController.text = emp['email_user']?.toString() ?? '';
+      _roleUser = (emp['role_user'] as num?)?.toInt() ?? 0;
+    }
     _loadDepartments();
   }
 
@@ -43,12 +53,25 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
     setState(() { _loadingDepts = true; _deptError = false; });
     try {
       final depts = await ApiService.getDepartments();
+      int? initialDeptId;
+      if (_isEdit) {
+        final deptName = widget.employee!['department']?.toString();
+        if (deptName != null) {
+          final match = depts.firstWhere(
+            (d) => d['nama_department']?.toString() == deptName,
+            orElse: () => {},
+          );
+          if (match.isNotEmpty) initialDeptId = match['id_department'] as int?;
+        }
+      }
       setState(() {
         _departments = depts;
         _loadingDepts = false;
         _deptError = depts.isEmpty;
+        if (initialDeptId != null) _selectedDeptId = initialDeptId;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[HrAddEmployeePage] Failed to load departments: $e');
       setState(() { _loadingDepts = false; _deptError = true; });
     }
   }
@@ -64,18 +87,33 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
 
     setState(() => _loading = true);
     try {
-      await ApiService.createEmployee(
-        idUser: _idController.text.trim().toUpperCase(),
-        namaUser: _namaController.text.trim(),
-        emailUser: _emailController.text.trim(),
-        passwdUser: _passController.text,
-        idDepartment: _selectedDeptId!,
-        roleUser: _roleUser,
-      );
+      if (_isEdit) {
+        await ApiService.updateEmployee(
+          _idController.text,
+          namaUser: _namaController.text.trim(),
+          emailUser: _emailController.text.trim(),
+          passwdUser: _passController.text.isNotEmpty ? _passController.text : null,
+          idDepartment: _selectedDeptId!,
+          roleUser: _roleUser,
+        );
+      } else {
+        await ApiService.createEmployee(
+          idUser: _idController.text.trim().toUpperCase(),
+          namaUser: _namaController.text.trim(),
+          emailUser: _emailController.text.trim(),
+          passwdUser: _passController.text,
+          idDepartment: _selectedDeptId!,
+          roleUser: _roleUser,
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${_namaController.text.trim()} berhasil ditambahkan'),
+          content: Text(
+            _isEdit
+                ? '${_namaController.text.trim()} berhasil diperbarui'
+                : '${_namaController.text.trim()} berhasil ditambahkan',
+          ),
           backgroundColor: const Color(0xFF166534),
         ),
       );
@@ -121,6 +159,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                                   hint: 'Contoh: ENG08',
                                   icon: Icons.badge_outlined,
                                   maxLength: 5,
+                                  readOnly: _isEdit,
                                   textCapitalization: TextCapitalization.characters,
                                   validator: (v) {
                                     if (v == null || v.trim().isEmpty) return 'ID User wajib diisi';
@@ -222,9 +261,9 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   letterSpacing: 1.2,
                 ),
               ),
-              const Text(
-                'Tambah Employee',
-                style: TextStyle(
+              Text(
+                _isEdit ? 'Edit Employee' : 'Tambah Employee',
+                style: const TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -289,6 +328,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.words,
     int? maxLength,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) {
     return Padding(
@@ -298,11 +338,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         maxLength: maxLength,
+        readOnly: readOnly,
         validator: validator,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'NimbusSans',
           fontSize: 14,
-          color: Color(0xFF245A72),
+          color: readOnly
+              ? const Color(0xFF245A72).withValues(alpha: 0.4)
+              : const Color(0xFF245A72),
           fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
@@ -334,11 +377,18 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
       child: TextFormField(
         controller: _passController,
         obscureText: _obscurePass,
-        validator: (v) {
-          if (v == null || v.isEmpty) return 'Password wajib diisi';
-          if (v.length < 6) return 'Password minimal 6 karakter';
-          return null;
-        },
+        validator: _isEdit
+            ? (v) {
+                if (v != null && v.isNotEmpty && v.length < 6) {
+                  return 'Password minimal 6 karakter';
+                }
+                return null;
+              }
+            : (v) {
+                if (v == null || v.isEmpty) return 'Password wajib diisi';
+                if (v.length < 6) return 'Password minimal 6 karakter';
+                return null;
+              },
         style: const TextStyle(
           fontFamily: 'NimbusSans',
           fontSize: 14,
@@ -347,7 +397,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         ),
         decoration: InputDecoration(
           labelText: 'Password',
-          hintText: 'Minimal 6 karakter',
+          hintText: _isEdit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter',
           prefixIcon: const Icon(Icons.lock_outline, size: 18, color: Color(0xFF61D1DB)),
           suffixIcon: GestureDetector(
             onTap: () => setState(() => _obscurePass = !_obscurePass),
@@ -617,9 +667,9 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                 height: 22,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
-            : const Text(
-                'Tambah Employee',
-                style: TextStyle(
+            : Text(
+                _isEdit ? 'Simpan Perubahan' : 'Tambah Employee',
+                style: const TextStyle(
                   fontFamily: 'NimbusSans',
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

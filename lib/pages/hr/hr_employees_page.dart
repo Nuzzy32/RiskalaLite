@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
+import '../../data/division_info.dart';
 import '../../services/api_service.dart';
 import 'hr_division_detail_page.dart';
 

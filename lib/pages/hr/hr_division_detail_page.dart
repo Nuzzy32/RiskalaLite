@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../data/dummy_data.dart';
+import '../../services/api_service.dart';
+import 'hr_add_employee_page.dart';
 
 class HrDivisionDetailPage extends StatefulWidget {
   final String divisionName;
@@ -13,20 +14,45 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _employees = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  List<EmployeeStressData> get _filteredEmployees {
-    final employees = DummyStressData.byDivision(widget.divisionName);
-    if (_searchQuery.isEmpty) return employees;
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final all = await ApiService.getEmployees();
+      final filtered = all
+          .where((e) => (e['department']?.toString() ?? '') == widget.divisionName)
+          .toList();
+      if (!mounted) return;
+      setState(() { _employees = filtered; _loading = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredEmployees {
+    if (_searchQuery.isEmpty) return _employees;
     final q = _searchQuery.toLowerCase();
-    return employees
-        .where((e) =>
-            e.name.toLowerCase().contains(q) ||
-            e.jobTitle.toLowerCase().contains(q))
+    return _employees
+        .where((e) => (e['nama_user']?.toString().toLowerCase() ?? '').contains(q))
         .toList();
   }
 
@@ -36,7 +62,6 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: Column(
         children: [
-          // Header
           Container(
             color: const Color(0xFFF8F9FA).withValues(alpha: 0.8),
             child: SafeArea(
@@ -57,42 +82,23 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                         child: Text(
                           'DIVISI ${widget.divisionName.toUpperCase()}',
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 12,
+                            fontFamily: 'Manrope', fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF245A72),
-                            letterSpacing: 1.2,
+                            color: Color(0xFF245A72), letterSpacing: 1.2,
                           ),
                         ),
                       ),
                     ),
-                    ClipOval(
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 12,
-                            ),
-                          ],
-                        ),
-                        child: const CircleAvatar(
-                          backgroundColor: Color(0xFFE0F2F4),
-                          child: Icon(Icons.person, color: Color(0xFF245A72), size: 18),
-                        ),
-                      ),
+                    const CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Color(0xFFE0F2F4),
+                      child: Icon(Icons.person, color: Color(0xFF245A72), size: 18),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-
-          // Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
             child: Container(
@@ -101,10 +107,8 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                 borderRadius: BorderRadius.circular(9999),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: TextField(
@@ -113,10 +117,8 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                 decoration: const InputDecoration(
                   hintText: 'Search employees...',
                   hintStyle: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 14,
-                    color: Color(0xFF9CA3AF),
-                  ),
+                      fontFamily: 'NimbusSans',
+                      fontSize: 14, color: Color(0xFF9CA3AF)),
                   prefixIcon: Padding(
                     padding: EdgeInsets.only(left: 16, right: 8),
                     child: Icon(Icons.search, size: 20, color: Color(0xFF9CA3AF)),
@@ -126,124 +128,180 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                   contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 ),
                 style: const TextStyle(
-                  fontFamily: 'NimbusSans',
-                  fontSize: 14,
-                  color: Color(0xFF245A72),
-                ),
+                    fontFamily: 'NimbusSans', fontSize: 14, color: Color(0xFF245A72)),
               ),
             ),
           ),
-
-          // Employee list
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
-              itemCount: _filteredEmployees.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final emp = _filteredEmployees[index];
-                return _buildEmployeeCard(emp);
-              },
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                : _error != null
+                    ? _buildErrorState()
+                    : _filteredEmployees.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                              itemCount: _filteredEmployees.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 16),
+                              itemBuilder: (_, i) =>
+                                  _buildEmployeeCard(_filteredEmployees[i]),
+                            ),
+                          ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmployeeCard(EmployeeStressData emp) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(9999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 24,
-            backgroundColor: Color(0xFFF3F4F6),
-            child: Icon(Icons.person, color: Color(0xFF245A72), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  emp.name,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF245A72),
-                  ),
-                ),
-                Text(
-                  emp.jobTitle.toUpperCase(),
-                  style: const TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 10,
-                    color: Color(0xFF6B7280),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
+  Widget _buildErrorState() => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Color(0xFF9D174D), size: 48),
+            const SizedBox(height: 12),
+            Text(_error!,
+                style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+            const SizedBox(height: 12),
+            ElevatedButton(onPressed: _load, child: const Text('Coba lagi')),
+          ],
+        ),
+      );
+
+  Widget _buildEmptyState() => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people_outline, size: 56,
+                color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+            const SizedBox(height: 12),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'Belum ada karyawan di divisi ini'
+                  : 'Tidak ditemukan',
+              style: TextStyle(
+                  fontFamily: 'NimbusSans', fontSize: 14,
+                  color: const Color(0xFF245A72).withValues(alpha: 0.5)),
             ),
-          ),
-          _buildStressBadge(emp.stressLevel),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
-  Widget _buildStressBadge(String level) {
-    Color bgColor;
-    Color textColor;
-    String label;
-
-    switch (level) {
-      case 'low':
-        bgColor = const Color(0xFFDCFCE7);
-        textColor = const Color(0xFF166534);
-        label = 'LOW';
-      case 'moderate':
-        bgColor = const Color(0xFFFEF9C3);
-        textColor = const Color(0xFF854D0E);
-        label = 'MODERATE';
-      case 'high':
-        bgColor = const Color(0xFFFCE7F3);
-        textColor = const Color(0xFF9D174D);
-        label = 'HIGH';
-      default:
-        bgColor = const Color(0xFFF1F5F9);
-        textColor = const Color(0xFF64748B);
-        label = level.toUpperCase();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'NimbusSans',
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          letterSpacing: 0.25,
+  Widget _buildEmployeeCard(Map<String, dynamic> emp) {
+    return GestureDetector(
+      onTap: () async {
+        final updated = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (_) => HrAddEmployeePage(employee: emp)),
+        );
+        if (updated == true) _load();
+      },
+      onLongPress: () => _confirmDelete(emp),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(9999),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          children: [
+            const CircleAvatar(
+              radius: 24,
+              backgroundColor: Color(0xFFF3F4F6),
+              child: Icon(Icons.person, color: Color(0xFF245A72), size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(emp['nama_user']?.toString() ?? '-',
+                      style: const TextStyle(
+                          fontFamily: 'Manrope', fontSize: 16,
+                          fontWeight: FontWeight.w700, color: Color(0xFF245A72))),
+                  Text((emp['email_user']?.toString() ?? '-').toLowerCase(),
+                      style: const TextStyle(
+                          fontFamily: 'NimbusSans', fontSize: 11, color: Color(0xFF6B7280))),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2F4),
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              child: Text(emp['id_user']?.toString() ?? '-',
+                  style: const TextStyle(
+                      fontFamily: 'NimbusSans', fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF245A72), letterSpacing: 0.25)),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(Map<String, dynamic> emp) async {
+    final name = emp['nama_user']?.toString() ?? 'Employee ini';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Hapus Employee',
+          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, color: Color(0xFF245A72)),
+        ),
+        content: Text(
+          'Yakin ingin menghapus $name? Tindakan ini tidak bisa dibatalkan.',
+          style: const TextStyle(fontFamily: 'NimbusSans', fontSize: 14, color: Color(0xFF245A72)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal', style: TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9D174D),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Hapus', style: TextStyle(fontFamily: 'NimbusSans', fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ApiService.deleteEmployee(emp['id_user']?.toString() ?? '');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$name berhasil dihapus'),
+          backgroundColor: const Color(0xFF166534),
+        ),
+      );
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: const Color(0xFF9D174D),
+        ),
+      );
+    }
   }
 }
