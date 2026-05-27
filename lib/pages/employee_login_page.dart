@@ -114,21 +114,10 @@ class _EmployeeLoginPageState extends State<EmployeeLoginPage>
     });
     try {
       final code = _codeCtrl.text.trim().toUpperCase();
-      final result = await ApiService.login(
-        nip,
-        pass,
-        companyCode: code,
-      );
+      await ApiService.login(nip, pass, companyCode: code);
       if (!mounted) return;
-      if (result['success'] == true) {
-        final route = (result['isHr'] == true) ? '/hr/home' : '/home';
-        Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
-      } else {
-        setState(() {
-          _loginError = result['message'] as String? ?? 'Login gagal';
-          _loggingIn = false;
-        });
-      }
+      final route = ApiService.isHr ? '/hr/home' : '/home';
+      Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
     } catch (e) {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');

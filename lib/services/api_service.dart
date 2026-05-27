@@ -145,7 +145,7 @@ class ApiService {
     final res = await http.post(
       Uri.parse('$baseUrl/companies/validate-code'),
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'code': code}),
+      body: jsonEncode({'company_code': code}),
     ).timeout(_timeout);
 
     if (res.statusCode == 404) {
