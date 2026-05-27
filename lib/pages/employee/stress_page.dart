@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class StressPage extends StatefulWidget {
   const StressPage({super.key});
@@ -9,7 +10,9 @@ class StressPage extends StatefulWidget {
 
 class _StressPageState extends State<StressPage> {
   int _currentQ = 0;
+  bool _slideForward = true;
   final List<int?> _answers = List.filled(10, null);
+  bool _submitting = false;
 
   final _questions = [
     'Saya merasa kewalahan dengan beban kerja saya',
@@ -34,15 +37,28 @@ class _StressPageState extends State<StressPage> {
 
   void _nextQuestion() {
     if (_currentQ < 9) {
-      setState(() => _currentQ++);
+      setState(() { _slideForward = true; _currentQ++; });
     } else {
-      Navigator.pushReplacementNamed(context, '/home');
+      _submitAndFinish();
     }
+  }
+
+  Future<void> _submitAndFinish() async {
+    setState(() => _submitting = true);
+    // Setiap jawaban bernilai 0-4; total skor 0-40 (PSS-10 scale)
+    final totalScore = _answers.fold<int>(0, (sum, a) => sum + (a ?? 0));
+    try {
+      await ApiService.submitAssessment(totalScore: totalScore);
+    } catch (_) {
+      // Gagal kirim tidak blokir user; tetap lanjut ke home
+    }
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   void _prevQuestion() {
     if (_currentQ > 0) {
-      setState(() => _currentQ--);
+      setState(() { _slideForward = false; _currentQ--; });
     } else {
       Navigator.pop(context);
     }
@@ -161,122 +177,150 @@ class _StressPageState extends State<StressPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                    child: Column(
-                      children: [
-                        // Question text
-                        Text(
-                          _questions[_currentQ],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF245A72),
-                            letterSpacing: -0.75,
-                            height: 1.25,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 320),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        final direction = _slideForward ? 0.04 : -0.04;
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: Offset(direction, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: child,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Pilih opsi yang paling menggambarkan 2 minggu terakhir Anda.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(
-                              0xFF245A72,
-                            ).withValues(alpha: 0.6),
-                            height: 1.43,
+                        );
+                      },
+                      child: Column(
+                        key: ValueKey(_currentQ),
+                        children: [
+                          // Question text
+                          Text(
+                            _questions[_currentQ],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF245A72),
+                              letterSpacing: -0.75,
+                              height: 1.25,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 32),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Pilih opsi yang paling menggambarkan 2 minggu terakhir Anda.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(
+                                0xFF245A72,
+                              ).withValues(alpha: 0.6),
+                              height: 1.43,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
 
-                        // Options
-                        ...List.generate(_options.length, (i) {
-                          final isSelected = _answers[_currentQ] == i;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _answers[_currentQ] = i),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 17,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFFB3F3F4)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(9999),
-                                  border: Border.all(
+                          // Options
+                          ...List.generate(_options.length, (i) {
+                            final isSelected = _answers[_currentQ] == i;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: GestureDetector(
+                                onTap: () =>
+                                    setState(() => _answers[_currentQ] = i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOutBack,
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 17,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isSelected
                                         ? const Color(0xFFB3F3F4)
-                                        : Colors.transparent,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFF41C1DD,
-                                      ).withValues(alpha: 0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 4),
-                                      spreadRadius: -2,
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(9999),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFFB3F3F4)
+                                          : Colors.transparent,
                                     ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _options[i],
-                                        style: const TextStyle(
-                                          fontFamily: 'Manrope',
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF245A72),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF41C1DD,
+                                        ).withValues(alpha: 0.1),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 4),
+                                        spreadRadius: -2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _options[i],
+                                          style: const TextStyle(
+                                            fontFamily: 'Manrope',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF245A72),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isSelected
-                                            ? const Color(0xFF245A72)
-                                            : Colors.transparent,
-                                        border: Border.all(
+                                      const SizedBox(width: 16),
+                                      AnimatedContainer(
+                                        duration: const Duration(milliseconds: 200),
+                                        curve: Curves.easeOutBack,
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
                                           color: isSelected
                                               ? const Color(0xFF245A72)
-                                              : const Color(0xFFE2E8F0),
-                                          width: 2,
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? const Color(0xFF245A72)
+                                                : const Color(0xFFE2E8F0),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: AnimatedScale(
+                                            scale: isSelected ? 1.0 : 0.0,
+                                            duration: const Duration(milliseconds: 250),
+                                            curve: Curves.elasticOut,
+                                            child: Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      child: isSelected
-                                          ? Center(
-                                              child: Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
-                      ],
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -288,7 +332,7 @@ class _StressPageState extends State<StressPage> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _answers[_currentQ] != null
+                      onPressed: (_answers[_currentQ] != null && !_submitting)
                           ? _nextQuestion
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -310,23 +354,37 @@ class _StressPageState extends State<StressPage> {
                       ),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _currentQ < 9
-                                  ? 'Pertanyaan Selanjutnya'
-                                  : 'Selesai',
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.45,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward, size: 16),
-                          ],
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: _submitting
+                              ? const SizedBox(
+                                  key: ValueKey('loading'),
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Row(
+                                  key: ValueKey(_currentQ < 9 ? 'next' : 'done'),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _currentQ < 9
+                                          ? 'Pertanyaan Selanjutnya'
+                                          : 'Selesai',
+                                      style: const TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.45,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_forward, size: 16),
+                                  ],
+                                ),
                         ),
                       ),
                     ),

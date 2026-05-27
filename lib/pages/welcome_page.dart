@@ -16,48 +16,78 @@ class _WelcomePageState extends State<WelcomePage>
   late final AnimationController _textController;
   late final AnimationController _underlineController;
 
+  bool _animsStarted = false;
+  late final AnimationController _btnController;
+  late final Animation<double> _btn1Anim;
+  late final Animation<double> _btn2Anim;
+
   @override
   void initState() {
     super.initState();
-
-    // Floating up/down animation
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3000),
-    )..repeat(reverse: true);
-
-    // Slow 3D rotation
+    );
     _rotateController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 6000),
-    )..repeat();
-
-    // Pulsing glow rings
+    );
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-
-    // Text character animation
+    );
     _textController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-
-    // Underline animation
     _underlineController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+    _btnController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _btn1Anim = CurvedAnimation(
+      parent: _btnController,
+      curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+    );
+    _btn2Anim = CurvedAnimation(
+      parent: _btnController,
+      curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),
+    );
+  }
 
-    // Start text animation after a short delay
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        _textController.forward().then((_) {
-          if (mounted) _underlineController.forward();
-        });
-      }
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_animsStarted) return;
+    _animsStarted = true;
+
+    final reducedMotion = MediaQuery.of(context).disableAnimations;
+    if (reducedMotion) {
+      _floatController.value = 1.0;
+      _rotateController.value = 0.0;
+      _pulseController.value = 1.0;
+      _textController.value = 1.0;
+      _underlineController.value = 1.0;
+      _btnController.value = 1.0;
+    } else {
+      _floatController.repeat(reverse: true);
+      _rotateController.repeat();
+      _pulseController.repeat(reverse: true);
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          _textController.forward().then((_) {
+            if (mounted) _underlineController.forward();
+          });
+        }
+      });
+      // Buttons stagger in after text animation settles
+      Future.delayed(const Duration(milliseconds: 1300), () {
+        if (mounted) _btnController.forward();
+      });
+    }
   }
 
   @override
@@ -67,6 +97,7 @@ class _WelcomePageState extends State<WelcomePage>
     _pulseController.dispose();
     _textController.dispose();
     _underlineController.dispose();
+    _btnController.dispose();
     super.dispose();
   }
 
@@ -185,23 +216,99 @@ class _WelcomePageState extends State<WelcomePage>
                     ],
                   ),
                 ),
-                // Get Started shimmer button
+                // CTA buttons — staggered entrance via _btnController
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
-                  child: ShimmerButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/login');
-                    },
-                    child: const Text(
-                      'Get Started',
-                      style: TextStyle(
-                        fontFamily: 'Public Sans',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.45,
+                  child: Column(
+                    children: [
+                      // Primary: Masuk sebagai Pegawai
+                      ListenableBuilder(
+                        listenable: _btn1Anim,
+                        builder: (_, child) {
+                          final v = _btn1Anim.value;
+                          return Opacity(
+                            opacity: v,
+                            child: Transform.translate(
+                              offset: Offset(0, 18 * (1 - v)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: ShimmerButton(
+                          onPressed: () => Navigator.pushNamed(context, '/entry/employee'),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.badge_outlined, color: Colors.white, size: 18),
+                              SizedBox(width: 10),
+                              Text(
+                                'Masuk sebagai Pegawai',
+                                style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 14),
+                      // Secondary: Daftarkan Perusahaan
+                      ListenableBuilder(
+                        listenable: _btn2Anim,
+                        builder: (_, child) {
+                          final v = _btn2Anim.value;
+                          return Opacity(
+                            opacity: v,
+                            child: Transform.translate(
+                              offset: Offset(0, 18 * (1 - v)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pushNamed(context, '/entry/register'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Color(0xFF245A72),
+                                width: 1.5,
+                              ),
+                              backgroundColor: Colors.white.withValues(alpha: 0.55),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(9999),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.business_rounded,
+                                  color: Color(0xFF245A72),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Daftarkan Perusahaan Anda',
+                                  style: TextStyle(
+                                    fontFamily: 'Public Sans',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF245A72),
+                                    letterSpacing: 0.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

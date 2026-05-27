@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
@@ -22,6 +24,12 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
   bool _loading = false;
   bool _loadingDepts = true;
   bool _deptError = false;
+
+  // Import state
+  File? _pickedFile;
+  String? _pickedFileName;
+  int? _pickedFileSize;
+  bool _uploading = false;
 
   int _roleUser = 0;
   int? _selectedDeptId;
@@ -73,6 +81,104 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
     } catch (e) {
       debugPrint('[HrAddEmployeePage] Failed to load departments: $e');
       setState(() { _loadingDepts = false; _deptError = true; });
+    }
+  }
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv', 'xls', 'xlsx'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final pf = result.files.first;
+    if (pf.path == null) return;
+    setState(() {
+      _pickedFile = File(pf.path!);
+      _pickedFileName = pf.name;
+      _pickedFileSize = pf.size;
+    });
+  }
+
+  Future<void> _uploadFile() async {
+    if (_pickedFile == null) return;
+    setState(() => _uploading = true);
+    try {
+      final result = await ApiService.importEmployeeDatabase(_pickedFile!);
+      if (!mounted) return;
+      final imported = result['imported'] as int? ?? 0;
+      final skipped = result['skipped'] as int? ?? 0;
+      final errors = (result['errors'] as List?)?.cast<String>() ?? [];
+
+      setState(() {
+        _pickedFile = null;
+        _pickedFileName = null;
+        _pickedFileSize = null;
+        _uploading = false;
+      });
+
+      if (!mounted) return;
+
+      final hasErrors = errors.isNotEmpty;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            backgroundColor:
+                hasErrors ? const Color(0xFF92400E) : const Color(0xFF166534),
+            duration: Duration(seconds: hasErrors ? 6 : 4),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$imported pegawai berhasil diimport'
+                  '${skipped > 0 ? ', $skipped dilewati' : ''}',
+                  style: const TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Colors.white,
+                  ),
+                ),
+                if (errors.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    errors.take(3).join('\n') +
+                        (errors.length > 3
+                            ? '\n…dan ${errors.length - 3} error lainnya'
+                            : ''),
+                    style: const TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+
+      if (imported > 0) Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF9D174D),
+            content: Text(
+              e.toString().replaceAll('Exception: ', ''),
+              style: const TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 13,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
     }
   }
 
@@ -149,6 +255,12 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (!_isEdit) ...[
+                              _buildImportSection(),
+                              const SizedBox(height: 24),
+                              _buildOrDivider(),
+                              const SizedBox(height: 24),
+                            ],
                             _buildSectionLabel('INFORMASI AKUN'),
                             const SizedBox(height: 12),
                             _buildCard(
@@ -218,6 +330,295 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
       ),
     );
   }
+
+  // ── Import Section ───────────────────────────────────────────────────────
+
+  Widget _buildImportSection() {
+    final hasFile = _pickedFile != null;
+    final sizeLabel = _pickedFileSize != null
+        ? _pickedFileSize! < 1024 * 1024
+            ? '${(_pickedFileSize! / 1024).toStringAsFixed(1)} KB'
+            : '${(_pickedFileSize! / (1024 * 1024)).toStringAsFixed(1)} MB'
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('UNGGAH DATABASE PEGAWAI'),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: hasFile ? null : _pickFile,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+            decoration: BoxDecoration(
+              color: hasFile
+                  ? const Color(0xFFE8F8F9)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: hasFile
+                    ? const Color(0xFF61D1DB)
+                    : const Color(0xFF245A72).withValues(alpha: 0.15),
+                width: hasFile ? 1.5 : 1,
+                strokeAlign: BorderSide.strokeAlignInside,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF245A72).withValues(alpha: 0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: hasFile
+                ? _buildFilePreview(sizeLabel)
+                : _buildDropZone(),
+          ),
+        ),
+        if (hasFile) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _uploading ? null : _uploadFile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF245A72),
+                disabledBackgroundColor:
+                    const Color(0xFF245A72).withValues(alpha: 0.4),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _uploading
+                    ? const SizedBox(
+                        key: ValueKey('spin'),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        key: ValueKey('lbl'),
+                        'Unggah Sekarang',
+                        style: TextStyle(
+                          fontFamily: 'NimbusSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _uploading
+                ? null
+                : () => setState(() {
+                      _pickedFile = null;
+                      _pickedFileName = null;
+                      _pickedFileSize = null;
+                    }),
+            child: Text(
+              'Ganti file',
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 12,
+                color: const Color(0xFF245A72).withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDropZone() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F8F9),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.cloud_upload_outlined,
+            color: Color(0xFF61D1DB),
+            size: 28,
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Pilih file CSV atau Excel',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF245A72),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Format: .csv  •  .xls  •  .xlsx  •  Maks. 5 MB',
+          style: TextStyle(
+            fontFamily: 'NimbusSans',
+            fontSize: 11,
+            color: const Color(0xFF245A72).withValues(alpha: 0.4),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+          decoration: BoxDecoration(
+            color: const Color(0xFF245A72),
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: const Text(
+            'Pilih File',
+            style: TextStyle(
+              fontFamily: 'NimbusSans',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildTemplateHint(),
+      ],
+    );
+  }
+
+  Widget _buildFilePreview(String? sizeLabel) {
+    final ext = _pickedFileName?.split('.').last.toUpperCase() ?? '';
+    final isXlsx = ext == 'XLSX' || ext == 'XLS';
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isXlsx
+                ? const Color(0xFFDCFCE7)
+                : const Color(0xFFDBEAFE),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            isXlsx ? Icons.table_chart_outlined : Icons.description_outlined,
+            color: isXlsx
+                ? const Color(0xFF166534)
+                : const Color(0xFF1E40AF),
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _pickedFileName ?? '',
+                style: const TextStyle(
+                  fontFamily: 'NimbusSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF245A72),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (sizeLabel != null)
+                Text(
+                  sizeLabel,
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 11,
+                    color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF61D1DB),
+          size: 20,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTemplateHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF245A72).withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 13,
+            color: const Color(0xFF245A72).withValues(alpha: 0.45),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Kolom: NIP · Nama · Email · Departemen',
+            style: TextStyle(
+              fontFamily: 'NimbusSans',
+              fontSize: 11,
+              color: const Color(0xFF245A72).withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text(
+            'atau tambah satu per satu',
+            style: TextStyle(
+              fontFamily: 'NimbusSans',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF245A72).withValues(alpha: 0.35),
+              letterSpacing: 0.3,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Header ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
     return Container(

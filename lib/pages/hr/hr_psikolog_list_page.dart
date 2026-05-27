@@ -120,14 +120,22 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
           children: [
             _buildHeader(),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
-                  : _error != null
-                      ? _buildError()
-                      : RefreshIndicator(
-                          onRefresh: _load,
-                          child: _psikologs.isEmpty ? _buildEmpty() : _buildList(),
-                        ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  child: child,
+                ),
+                child: _loading
+                    ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                    : _error != null
+                        ? _buildError()
+                        : RefreshIndicator(
+                            key: const ValueKey('content'),
+                            onRefresh: _load,
+                            child: _psikologs.isEmpty ? _buildEmpty() : _buildList(),
+                          ),
+              ),
             ),
           ],
         ),

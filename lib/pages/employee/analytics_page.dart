@@ -240,7 +240,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                               ),
                               const SizedBox(height: 6),
                               AnimatedContainer(
-                                duration: const Duration(milliseconds: 400),
+                                duration: const Duration(milliseconds: 280),
                                 height: 80 * fraction,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(999),

@@ -11,21 +11,47 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
+  // selected category
   String _category = '';
+  int _categoryId = 0;
+
   bool _showDropdown = false;
   final _descController = TextEditingController();
   double _stressLevel = 3;
   bool _submitted = false;
   bool _submitting = false;
 
-  final _categories = [
-    'Beban Kerja Berlebihan',
-    'Konflik dengan Rekan Kerja',
-    'Masalah Manajemen',
-    'Work-Life Balance',
-    'Lingkungan Kerja',
-    'Lainnya',
-  ];
+  // loaded from API (replaces hardcoded list)
+  List<Map<String, dynamic>> _categories = [];
+  bool _loadingCategories = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final data = await ApiService.getKategoriLaporan();
+      if (!mounted) return;
+      setState(() { _categories = data; _loadingCategories = false; });
+    } catch (_) {
+      if (!mounted) return;
+      // Fallback to hardcoded list if API fails
+      setState(() {
+        _categories = [
+          {'id': 1, 'nama_kategori': 'Beban Kerja Berlebihan'},
+          {'id': 2, 'nama_kategori': 'Konflik dengan Rekan Kerja'},
+          {'id': 3, 'nama_kategori': 'Masalah Manajemen'},
+          {'id': 4, 'nama_kategori': 'Work-Life Balance'},
+          {'id': 5, 'nama_kategori': 'Lingkungan Kerja'},
+          {'id': 6, 'nama_kategori': 'Lainnya'},
+        ];
+        _loadingCategories = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -49,9 +75,8 @@ class _ReportPageState extends State<ReportPage> {
 
     setState(() => _submitting = true);
     try {
-      final kategoriIdx = _categories.indexOf(_category) + 1;
       await ApiService.submitReport(
-        kategori: kategoriIdx,
+        kategori: _categoryId,
         deskripsi: _descController.text.trim(),
         tingkatStres: _stressLevel.round(),
       );
@@ -60,6 +85,7 @@ class _ReportPageState extends State<ReportPage> {
         _submitted = true;
         _submitting = false;
         _category = '';
+        _categoryId = 0;
         _descController.clear();
         _stressLevel = 3;
       });
@@ -173,7 +199,7 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       const SizedBox(height: 12),
                       GestureDetector(
-                        onTap: () => setState(() => _showDropdown = !_showDropdown),
+                        onTap: _loadingCategories ? null : () => setState(() => _showDropdown = !_showDropdown),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(24, 16, 16, 16),
@@ -192,7 +218,9 @@ class _ReportPageState extends State<ReportPage> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  _category.isEmpty ? 'Pilih kategori...' : _category,
+                                  _loadingCategories
+                                      ? 'Memuat kategori...'
+                                      : (_category.isEmpty ? 'Pilih kategori...' : _category),
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 14,
@@ -208,47 +236,63 @@ class _ReportPageState extends State<ReportPage> {
                           ),
                         ),
                       ),
-                      if (_showDropdown)
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                blurRadius: 40,
-                                offset: const Offset(0, 10),
-                                spreadRadius: -10,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: _categories.map((cat) {
-                              final isSelected = _category == cat;
-                              return GestureDetector(
-                                onTap: () => setState(() {
-                                  _category = cat;
-                                  _showDropdown = false;
-                                }),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                  color: isSelected ? const Color(0xFF61D1DB).withValues(alpha: 0.05) : Colors.transparent,
-                                  child: Text(
-                                    cat,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? const Color(0xFF61D1DB) : const Color(0xFF475569),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                          child: SizeTransition(
+                            sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                            axisAlignment: -1,
+                            child: child,
                           ),
                         ),
+                        child: _showDropdown
+                            ? Container(
+                                key: const ValueKey('dropdown'),
+                                margin: const EdgeInsets.only(top: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.12),
+                                      blurRadius: 40,
+                                      offset: const Offset(0, 10),
+                                      spreadRadius: -10,
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: _categories.map((cat) {
+                                    final nama = cat['nama_kategori'] as String;
+                                    final id   = cat['id'] as int;
+                                    final isSelected = _categoryId == id;
+                                    return GestureDetector(
+                                      onTap: () => setState(() {
+                                        _category   = nama;
+                                        _categoryId = id;
+                                        _showDropdown = false;
+                                      }),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        color: isSelected ? const Color(0xFF61D1DB).withValues(alpha: 0.05) : Colors.transparent,
+                                        child: Text(
+                                          nama,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 14,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isSelected ? const Color(0xFF61D1DB) : const Color(0xFF475569),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              )
+                            : const SizedBox.shrink(key: ValueKey('empty')),
+                      ),
 
                       const SizedBox(height: 32),
 
@@ -390,20 +434,25 @@ class _ReportPageState extends State<ReportPage> {
                             shadowColor: const Color(0xFF60D0DC).withValues(alpha: 0.3),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
                           ),
-                          child: _submitting
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : Text(
-                                  _submitted ? 'Terkirim! \u2714' : 'Kirim',
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: _submitting
+                                ? const SizedBox(
+                                    key: ValueKey('loading'),
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(
+                                    key: ValueKey(_submitted ? 'sent' : 'send'),
+                                    _submitted ? 'Terkirim! \u2714' : 'Kirim',
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                     ],

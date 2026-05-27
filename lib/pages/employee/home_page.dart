@@ -456,37 +456,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(width: 8),
-          isCompleted
-              ? Container(
-                  width: 36, height: 36,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFF22C55E), shape: BoxShape.circle),
-                  child: const Icon(Icons.check, color: Colors.white, size: 18),
-                )
-              : ElevatedButton(
-                  onPressed: () => _startActivity(idx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: plan.iconColor,
-                    foregroundColor: Colors.white, elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9999)),
-                    minimumSize: const Size(0, 32),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) => ScaleTransition(
+              scale: CurvedAnimation(parent: animation, curve: Curves.elasticOut),
+              child: FadeTransition(opacity: animation, child: child),
+            ),
+            child: isCompleted
+                ? Container(
+                    key: const ValueKey('done'),
+                    width: 36, height: 36,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFF22C55E), shape: BoxShape.circle),
+                    child: const Icon(Icons.check, color: Colors.white, size: 18),
+                  )
+                : ElevatedButton(
+                    key: const ValueKey('start'),
+                    onPressed: () => _startActivity(idx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: plan.iconColor,
+                      foregroundColor: Colors.white, elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9999)),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.play_arrow_rounded, size: 16),
+                        SizedBox(width: 4),
+                        Text('Start',
+                            style: TextStyle(
+                                fontFamily: 'Manrope', fontSize: 12,
+                                fontWeight: FontWeight.w700)),
+                      ],
+                    ),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.play_arrow_rounded, size: 16),
-                      SizedBox(width: 4),
-                      Text('Start',
-                          style: TextStyle(
-                              fontFamily: 'Manrope', fontSize: 12,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
+          ),
         ],
       ),
     );

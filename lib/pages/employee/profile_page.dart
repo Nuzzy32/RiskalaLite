@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -137,9 +138,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: const Icon(Icons.person, size: 56, color: Color(0xFF245A72)),
                             ),
                             const SizedBox(height: 24),
-                            const Text(
-                              'Tony',
-                              style: TextStyle(
+                            Text(
+                              ApiService.userName,
+                              style: const TextStyle(
                                 fontFamily: 'Public Sans',
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
@@ -148,7 +149,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Product Manager @ Contoh Corp',
+                              ApiService.userDepartment.isNotEmpty
+                                  ? 'Divisi ${ApiService.userDepartment}'
+                                  : ApiService.userEmail,
                               style: TextStyle(
                                 fontFamily: 'Public Sans',
                                 fontSize: 14,
@@ -163,9 +166,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 color: const Color(0xFF61D1DB).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(9999),
                               ),
-                              child: const Text(
-                                'MEMBER SINCE 2021',
-                                style: TextStyle(
+                              child: Text(
+                                'ID: ${ApiService.userId}',
+                                style: const TextStyle(
                                   fontFamily: 'Public Sans',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -272,14 +275,21 @@ class _ProfilePageState extends State<ProfilePage> {
                             _settingsItem(
                               icon: Icons.business_outlined,
                               title: 'Info Perusahaan',
-                              subtitle: 'PT Contoh',
+                              subtitle: ApiService.userDepartment.isNotEmpty
+                                  ? 'Divisi ${ApiService.userDepartment}'
+                                  : 'RISKALA Lite',
                             ),
 
                             const SizedBox(height: 24),
 
                             // Log Out
                             GestureDetector(
-                              onTap: () => Navigator.pushReplacementNamed(context, '/'),
+                              onTap: () async {
+                                final nav = Navigator.of(context);
+                                await ApiService.logout();
+                                if (!mounted) return;
+                                nav.pushReplacementNamed('/');
+                              },
                               child: Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(17),

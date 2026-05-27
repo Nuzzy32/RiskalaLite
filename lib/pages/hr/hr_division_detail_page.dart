@@ -133,23 +133,31 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
             ),
           ),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
-                : _error != null
-                    ? _buildErrorState()
-                    : _filteredEmployees.isEmpty
-                        ? _buildEmptyState()
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            child: ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
-                              itemCount: _filteredEmployees.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 16),
-                              itemBuilder: (_, i) =>
-                                  _buildEmployeeCard(_filteredEmployees[i]),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                child: child,
+              ),
+              child: _loading
+                  ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                  : _error != null
+                      ? _buildErrorState()
+                      : _filteredEmployees.isEmpty
+                          ? _buildEmptyState()
+                          : RefreshIndicator(
+                              key: const ValueKey('content'),
+                              onRefresh: _load,
+                              child: ListView.separated(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                                itemCount: _filteredEmployees.length,
+                                separatorBuilder: (_, _) => const SizedBox(height: 16),
+                                itemBuilder: (_, i) =>
+                                    _buildEmployeeCard(_filteredEmployees[i]),
+                              ),
                             ),
-                          ),
+            ),
           ),
         ],
       ),

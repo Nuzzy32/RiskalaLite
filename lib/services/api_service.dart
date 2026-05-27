@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,12 +18,16 @@ class ApiService {
 
   static String? _token;
   static Map<String, dynamic>? _currentUser;
+  static String? _activeCompanyCode;
 
   static String? get token => _token;
   static Map<String, dynamic>? get currentUser => _currentUser;
+  static String? get activeCompanyCode => _activeCompanyCode;
   static bool get isHr => _currentUser?['role_user'] == 1;
   static String get userId => _currentUser?['id_user'] ?? '';
   static String get userName => _currentUser?['nama_user'] ?? '';
+  static String get userDepartment => _currentUser?['department'] ?? '';
+  static String get userEmail => _currentUser?['email_user'] ?? '';
 
   /// Restore token & user dari SharedPreferences. Panggil di app startup.
   static Future<void> restoreSession() async {
@@ -90,11 +95,21 @@ class ApiService {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> login(String idUser, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String idUser,
+    String password, {
+    String? companyCode,
+  }) async {
+    final payload = <String, dynamic>{
+      'id_user': idUser,
+      'password': password,
+      if (companyCode != null && companyCode.isNotEmpty)
+        'company_code': companyCode,
+    };
     final res = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'id_user': idUser, 'password': password}),
+      body: jsonEncode(payload),
     ).timeout(_timeout);
 
     if (res.statusCode != 200) {
@@ -105,6 +120,7 @@ class ApiService {
     final body = jsonDecode(res.body);
     _token = body['token'];
     _currentUser = body['user'];
+    _activeCompanyCode = companyCode;
     await _persistSession();
     return body;
   }
@@ -117,7 +133,67 @@ class ApiService {
     }
     _token = null;
     _currentUser = null;
+    _activeCompanyCode = null;
     await _clearSession();
+  }
+
+  // ── Company (multi-tenant) ────────────────────────────────────────────────
+
+  /// Validates a company code (e.g., RSK-A1B2C3).
+  /// Returns `{company_id, company_name}` on success, throws on failure.
+  static Future<Map<String, dynamic>> validateCompanyCode(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/companies/validate-code'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'code': code}),
+    ).timeout(_timeout);
+
+    if (res.statusCode == 404) {
+      throw Exception('Kode perusahaan tidak ditemukan');
+    }
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body);
+      throw Exception(b['message'] ?? 'Kode perusahaan tidak valid');
+    }
+    return Map<String, dynamic>.from(jsonDecode(res.body));
+  }
+
+  /// Registers a new company, provisions the first HR admin, and returns
+  /// `{company_code, message}`.
+  static Future<Map<String, dynamic>> registerCompany({
+    required String companyName,
+    required String companyEmail,
+    required String industry,
+    required String employeeRange,
+    required String hrName,
+    required String hrNip,
+    required String hrPassword,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/companies/register'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({
+        'company_name': companyName,
+        'email': companyEmail,
+        'industry': industry,
+        'employee_range': employeeRange,
+        'admin_name': hrName,
+        'admin_nip': hrNip,
+        'admin_password': hrPassword,
+      }),
+    ).timeout(const Duration(seconds: 20));
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      final b = jsonDecode(res.body);
+      final errors = b['errors'] as Map?;
+      if (errors != null && errors.isNotEmpty) {
+        throw Exception(errors.values.first is List
+            ? errors.values.first[0]
+            : errors.values.first);
+      }
+      throw Exception(b['message'] ?? 'Gagal mendaftarkan perusahaan');
+    }
+    return Map<String, dynamic>.from(jsonDecode(res.body));
   }
 
   // ── Assessments ───────────────────────────────────────────────────────────
@@ -131,13 +207,21 @@ class ApiService {
 
   static Future<Map<String, dynamic>> submitAssessment({
     required int totalScore,
-    required int kategoriStres,
   }) async {
+    // kategori_stres is now a generated column on the server — only total_score is sent
     final res = await _post(
       Uri.parse('$baseUrl/assessments'),
-      body: jsonEncode({'total_score': totalScore, 'kategori_stres': kategoriStres}),
+      body: jsonEncode({'total_score': totalScore}),
     );
     return jsonDecode(res.body);
+  }
+
+  // ── Kategori Laporan ──────────────────────────────────────────────────────
+
+  static Future<List<Map<String, dynamic>>> getKategoriLaporan() async {
+    final res = await _get(Uri.parse('$baseUrl/kategori-laporan'));
+    final body = jsonDecode(res.body);
+    return List<Map<String, dynamic>>.from(body['data'] ?? []);
   }
 
   // ── Incident Reports ──────────────────────────────────────────────────────
@@ -399,5 +483,32 @@ class ApiService {
       throw Exception(b['message'] ?? 'Gagal menugaskan psikolog');
     }
     return jsonDecode(res.body);
+  }
+
+  // ── Bulk Import ───────────────────────────────────────────────────────────
+
+  /// Mengunggah file CSV/XLSX ke endpoint import pegawai.
+  /// Mengembalikan map: { imported, skipped, errors[] }
+  static Future<Map<String, dynamic>> importEmployeeDatabase(File file) async {
+    if (_token == null) throw Exception('Sesi tidak valid, silakan login ulang');
+
+    final uri = Uri.parse('$baseUrl/employees/import');
+    final req = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $_token'
+      ..headers['Accept'] = 'application/json'
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamed = await req.send().timeout(const Duration(seconds: 60));
+    final res = await http.Response.fromStream(streamed);
+
+    _checkAuth(res);
+
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception(body['message'] ?? 'Gagal mengimpor data pegawai');
+    }
+
+    return body;
   }
 }

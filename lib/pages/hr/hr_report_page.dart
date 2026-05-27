@@ -185,20 +185,28 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             const SizedBox(height: 16),
             _buildTabs(),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
-                  : _error != null
-                      ? _buildErrorState()
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _buildQuestionnaireTab(),
-                              _buildLaporanEmployeeTab(),
-                            ],
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  child: child,
+                ),
+                child: _loading
+                    ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                    : _error != null
+                        ? _buildErrorState()
+                        : RefreshIndicator(
+                            key: const ValueKey('content'),
+                            onRefresh: _loadData,
+                            child: TabBarView(
+                              controller: _tabController,
+                              children: [
+                                _buildQuestionnaireTab(),
+                                _buildLaporanEmployeeTab(),
+                              ],
+                            ),
                           ),
-                        ),
+              ),
             ),
           ],
         ),

@@ -292,19 +292,23 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(9999),
                                     ),
                                     onPressed: _isLoading ? null : _handleLogin,
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 200),
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              key: ValueKey('loading'),
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Row(
+                                              key: ValueKey('text'),
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
                                                 'Log In',
                                                 style: TextStyle(
                                                   fontFamily: 'Inter',
@@ -321,6 +325,7 @@ class _LoginPageState extends State<LoginPage> {
                                               ),
                                             ],
                                           ),
+                                    ),
                                   ),
                                 ),
                               ),

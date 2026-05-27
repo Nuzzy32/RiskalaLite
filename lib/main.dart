@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'pages/welcome_page.dart' hide AnimatedBuilder;
 import 'pages/login_page.dart';
+import 'pages/employee_login_page.dart';
+import 'pages/company_register_page.dart';
 import 'pages/employee/main_shell.dart';
 import 'pages/employee/assessment_history_page.dart';
 import 'pages/employee/stress_page.dart';
@@ -28,6 +30,8 @@ class MyApp extends StatelessWidget {
       home: const _AppBootstrap(),
       routes: {
         '/login': (context) => const LoginPage(),
+        '/entry/employee': (context) => const EmployeeLoginPage(),
+        '/entry/register': (context) => const CompanyRegisterPage(),
         // Employee routes
         '/home': (context) => const MainShell(),
         '/profile': (context) => const MainShell(initialTab: 3),
@@ -57,6 +61,7 @@ class _AppBootstrap extends StatefulWidget {
 class _AppBootstrapState extends State<_AppBootstrap>
     with SingleTickerProviderStateMixin {
   late final AnimationController _logoAnim;
+  bool _animStarted = false;
 
   @override
   void initState() {
@@ -64,8 +69,20 @@ class _AppBootstrapState extends State<_AppBootstrap>
     _logoAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
     _bootstrap();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_animStarted) return;
+    _animStarted = true;
+    if (MediaQuery.of(context).disableAnimations) {
+      _logoAnim.value = 1.0;
+    } else {
+      _logoAnim.repeat(reverse: true);
+    }
   }
 
   @override
