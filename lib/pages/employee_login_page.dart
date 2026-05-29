@@ -585,7 +585,30 @@ class _CredentialsStep extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/forgot-password',
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Lupa Kata Sandi?',
+              style: TextStyle(
+                color: Color(0xFF61D1DB),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           height: 54,
           child: ElevatedButton(

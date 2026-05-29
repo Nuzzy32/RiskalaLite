@@ -196,6 +196,52 @@ class ApiService {
     return Map<String, dynamic>.from(jsonDecode(res.body));
   }
 
+  // ── Password Reset ────────────────────────────────────────────────────────
+
+  static Future<void> requestPasswordResetOtp(String email) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'email': email}),
+    ).timeout(_timeout);
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body) as Map<String, dynamic>;
+      throw Exception(b['message'] ?? 'Gagal mengirim kode OTP');
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyResetOtp(
+      String email, String otpCode) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/verify-otp'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'email': email, 'otp': otpCode}),
+    ).timeout(_timeout);
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body) as Map<String, dynamic>;
+      throw Exception(b['message'] ?? 'Kode OTP tidak valid');
+    }
+    return Map<String, dynamic>.from(jsonDecode(res.body));
+  }
+
+  static Future<void> resetPassword(
+      String email, String otp, String newPassword) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'otp': otp,
+        'password': newPassword,
+        'password_confirmation': newPassword,
+      }),
+    ).timeout(_timeout);
+    if (res.statusCode != 200) {
+      final b = jsonDecode(res.body) as Map<String, dynamic>;
+      throw Exception(b['message'] ?? 'Gagal mengatur ulang kata sandi');
+    }
+  }
+
   // ── Assessments ───────────────────────────────────────────────────────────
 
   static Future<List<Map<String, dynamic>>> getAssessmentHistory({String? idUser}) async {

@@ -8,6 +8,9 @@ import 'pages/employee/assessment_history_page.dart';
 import 'pages/employee/stress_page.dart';
 import 'pages/employee/report_history_page.dart';
 import 'pages/hr/hr_main_shell.dart';
+import 'pages/forgot_password_page.dart';
+import 'pages/otp_verification_page.dart';
+import 'pages/reset_password_page.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 
@@ -32,6 +35,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/entry/employee': (context) => const EmployeeLoginPage(),
         '/entry/register': (context) => const CompanyRegisterPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/verify-otp': (context) => const OtpVerificationPage(),
+        '/reset-password': (context) => const ResetPasswordPage(),
         // Employee routes
         '/home': (context) => const MainShell(),
         '/profile': (context) => const MainShell(initialTab: 3),
