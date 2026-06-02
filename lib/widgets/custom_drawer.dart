@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../services/api_service.dart';
+import 'crisis_sheet.dart';
 
-/// Custom navigation drawer for the employee dashboard.
-/// Follows the "Organic Soft UI" design system with rounded corners
-/// and soft color palette.
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
-  static const _primaryColor = Color(0xFFB3F3F4);
-  static const _secondaryColor = Color(0xFF61D1DB);
-  static const _textColor = Color(0xFF245A72);
+  static const _primaryColor = AppColors.accentLight;
+  static const _secondaryColor = AppColors.accent;
+  static const _textColor = AppColors.brand;
   static const _bgColor = Color(0xFFF8F9FA);
 
   @override
@@ -26,7 +26,10 @@ class CustomDrawer extends StatelessWidget {
             // Menu items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 children: [
                   _DrawerItem(
                     icon: Icons.home_outlined,
@@ -48,6 +51,14 @@ class CustomDrawer extends StatelessWidget {
                     child: Divider(height: 1),
                   ),
                   _DrawerItem(
+                    icon: Icons.psychology_outlined,
+                    label: 'Konseling Rahasia',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/counseling');
+                    },
+                  ),
+                  _DrawerItem(
                     icon: Icons.assignment_outlined,
                     label: 'Assessment Log',
                     onTap: () {
@@ -65,13 +76,19 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.support_agent_outlined,
-                    label: 'Support & HR Contact',
-                    onTap: () => Navigator.pop(context),
+                    label: 'Kontak Bantuan',
+                    onTap: () {
+                      Navigator.pop(context);
+                      showCrisisSheet(context);
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.shield_outlined,
-                    label: 'Privacy & Data Security',
-                    onTap: () => Navigator.pop(context),
+                    label: 'Privasi & Keamanan Data',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/privacy');
+                    },
                   ),
                 ],
               ),
@@ -112,7 +129,10 @@ class CustomDrawer extends StatelessWidget {
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.6),
+                width: 2,
+              ),
             ),
             child: const CircleAvatar(
               radius: 32,
@@ -152,7 +172,11 @@ class CustomDrawer extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sentiment_satisfied, size: 16, color: Colors.white.withValues(alpha: 0.9)),
+                Icon(
+                  Icons.sentiment_satisfied,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Mood: Baik',
@@ -180,8 +204,13 @@ class CustomDrawer extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+              onPressed: () async {
+                await ApiService.logout();
+                if (context.mounted) {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/entry/employee', (_) => false);
+                }
               },
               icon: const Icon(Icons.logout_outlined, size: 20),
               label: const Text('Log Out'),
@@ -224,7 +253,6 @@ class CustomDrawer extends StatelessWidget {
   }
 }
 
-/// A single rounded menu item for the drawer.
 class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -246,13 +274,17 @@ class _DrawerItem extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(999),
-          splashColor: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
-          highlightColor: const Color(0xFFB3F3F4).withValues(alpha: 0.15),
+          splashColor: AppColors.accentLight.withValues(alpha: 0.3),
+          highlightColor: AppColors.accentLight.withValues(alpha: 0.15),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon, size: 22, color: const Color(0xFF245A72).withValues(alpha: 0.7)),
+                Icon(
+                  icon,
+                  size: 22,
+                  color: AppColors.brand.withValues(alpha: 0.7),
+                ),
                 const SizedBox(width: 16),
                 Text(
                   label,
@@ -260,7 +292,7 @@ class _DrawerItem extends StatelessWidget {
                     fontFamily: 'Manrope',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF245A72),
+                    color: AppColors.brand,
                   ),
                 ),
               ],

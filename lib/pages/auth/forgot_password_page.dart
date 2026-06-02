@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../../theme/app_colors.dart';
+import '../../services/api_service.dart';
 
-const _kBrand = Color(0xFF245A72);
-const _kAccent = Color(0xFF61D1DB);
-const _kAccentLight = Color(0xFFB3F3F4);
-const _kSubtle = Color(0xFF568B8F);
+const _kBrand = AppColors.brand;
+const _kAccent = AppColors.accent;
+const _kAccentLight = AppColors.accentLight;
+const _kSubtle = AppColors.subtle;
 const _kBg = Color(0xFFF8F9FA);
 
 class ForgotPasswordPage extends StatefulWidget {

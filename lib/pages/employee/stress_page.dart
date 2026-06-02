@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
+import '../../widgets/sos_button.dart';
+import 'stress_result_page.dart';
 
 class StressPage extends StatefulWidget {
   const StressPage({super.key});
@@ -37,28 +40,50 @@ class _StressPageState extends State<StressPage> {
 
   void _nextQuestion() {
     if (_currentQ < 9) {
-      setState(() { _slideForward = true; _currentQ++; });
+      setState(() {
+        _slideForward = true;
+        _currentQ++;
+      });
     } else {
       _submitAndFinish();
     }
   }
 
   Future<void> _submitAndFinish() async {
+    final riskScore = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _RiskScreenSheet(),
+    );
+    if (riskScore == null || !mounted) return;
+
     setState(() => _submitting = true);
-    // Setiap jawaban bernilai 0-4; total skor 0-40 (PSS-10 scale)
     final totalScore = _answers.fold<int>(0, (sum, a) => sum + (a ?? 0));
     try {
-      await ApiService.submitAssessment(totalScore: totalScore);
-    } catch (_) {
-      // Gagal kirim tidak blokir user; tetap lanjut ke home
-    }
+      await ApiService.submitAssessment(
+        totalScore: totalScore,
+        riskScore: riskScore,
+      );
+    } catch (_) {}
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/home');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            StressResultPage(score: totalScore, riskFlagged: riskScore >= 1),
+      ),
+    );
   }
 
   void _prevQuestion() {
     if (_currentQ > 0) {
-      setState(() { _slideForward = false; _currentQ--; });
+      setState(() {
+        _slideForward = false;
+        _currentQ--;
+      });
     } else {
       Navigator.pop(context);
     }
@@ -72,7 +97,6 @@ class _StressPageState extends State<StressPage> {
       backgroundColor: const Color(0xFFF8FBFC),
       body: Stack(
         children: [
-          // Decorative blobs
           Positioned(
             top: -50,
             right: -50,
@@ -93,16 +117,14 @@ class _StressPageState extends State<StressPage> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
+                color: AppColors.accentLight.withValues(alpha: 0.3),
               ),
             ),
           ),
 
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Row(
@@ -113,30 +135,29 @@ class _StressPageState extends State<StressPage> {
                           padding: EdgeInsets.all(8),
                           child: Icon(
                             Icons.arrow_back_ios_new,
-                            color: Color(0xFF245A72),
+                            color: AppColors.brand,
                             size: 16,
                           ),
                         ),
                       ),
                       const Expanded(
                         child: Text(
-                          'Stress Check-in',
+                          'Work-Stress Check-in',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF245A72),
+                            color: AppColors.brand,
                             letterSpacing: -0.45,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 32),
+                      const SosIconButton(size: 36),
                     ],
                   ),
                 ),
 
-                // Progress
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                   child: Column(
@@ -173,7 +194,6 @@ class _StressPageState extends State<StressPage> {
                   ),
                 ),
 
-                // Question + options
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
@@ -186,13 +206,16 @@ class _StressPageState extends State<StressPage> {
                         return FadeTransition(
                           opacity: animation,
                           child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: Offset(direction, 0),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            )),
+                            position:
+                                Tween<Offset>(
+                                  begin: Offset(direction, 0),
+                                  end: Offset.zero,
+                                ).animate(
+                                  CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutCubic,
+                                  ),
+                                ),
                             child: child,
                           ),
                         );
@@ -200,7 +223,6 @@ class _StressPageState extends State<StressPage> {
                       child: Column(
                         key: ValueKey(_currentQ),
                         children: [
-                          // Question text
                           Text(
                             _questions[_currentQ],
                             textAlign: TextAlign.center,
@@ -208,7 +230,7 @@ class _StressPageState extends State<StressPage> {
                               fontFamily: 'Manrope',
                               fontSize: 30,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF245A72),
+                              color: AppColors.brand,
                               letterSpacing: -0.75,
                               height: 1.25,
                             ),
@@ -229,7 +251,6 @@ class _StressPageState extends State<StressPage> {
                           ),
                           const SizedBox(height: 32),
 
-                          // Options
                           ...List.generate(_options.length, (i) {
                             final isSelected = _answers[_currentQ] == i;
                             return Padding(
@@ -247,12 +268,12 @@ class _StressPageState extends State<StressPage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xFFB3F3F4)
+                                        ? AppColors.accentLight
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(9999),
                                     border: Border.all(
                                       color: isSelected
-                                          ? const Color(0xFFB3F3F4)
+                                          ? AppColors.accentLight
                                           : Colors.transparent,
                                     ),
                                     boxShadow: [
@@ -275,24 +296,26 @@ class _StressPageState extends State<StressPage> {
                                             fontFamily: 'Manrope',
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
-                                            color: Color(0xFF245A72),
+                                            color: AppColors.brand,
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 16),
                                       AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
                                         curve: Curves.easeOutBack,
                                         width: 24,
                                         height: 24,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: isSelected
-                                              ? const Color(0xFF245A72)
+                                              ? AppColors.brand
                                               : Colors.transparent,
                                           border: Border.all(
                                             color: isSelected
-                                                ? const Color(0xFF245A72)
+                                                ? AppColors.brand
                                                 : const Color(0xFFE2E8F0),
                                             width: 2,
                                           ),
@@ -300,14 +323,17 @@ class _StressPageState extends State<StressPage> {
                                         child: Center(
                                           child: AnimatedScale(
                                             scale: isSelected ? 1.0 : 0.0,
-                                            duration: const Duration(milliseconds: 250),
+                                            duration: const Duration(
+                                              milliseconds: 250,
+                                            ),
                                             curve: Curves.elasticOut,
                                             child: Container(
                                               width: 8,
                                               height: 8,
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
-                                                borderRadius: BorderRadius.circular(4),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                             ),
                                           ),
@@ -325,7 +351,6 @@ class _StressPageState extends State<StressPage> {
                   ),
                 ),
 
-                // Bottom action
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                   child: SizedBox(
@@ -367,7 +392,9 @@ class _StressPageState extends State<StressPage> {
                                   ),
                                 )
                               : Row(
-                                  key: ValueKey(_currentQ < 9 ? 'next' : 'done'),
+                                  key: ValueKey(
+                                    _currentQ < 9 ? 'next' : 'done',
+                                  ),
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
@@ -391,6 +418,156 @@ class _StressPageState extends State<StressPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RiskScreenSheet extends StatefulWidget {
+  const _RiskScreenSheet();
+
+  @override
+  State<_RiskScreenSheet> createState() => _RiskScreenSheetState();
+}
+
+class _RiskScreenSheetState extends State<_RiskScreenSheet> {
+  int? _selected;
+
+  static const _options = [
+    'Tidak pernah',
+    'Beberapa hari',
+    'Lebih dari separuh hari',
+    'Hampir setiap hari',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.brand.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Satu pertanyaan terakhir',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.brand,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Dalam 2 minggu terakhir, seberapa sering kamu terganggu oleh pikiran bahwa kamu lebih baik tiada, atau ingin menyakiti diri sendiri?',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 14.5,
+              height: 1.5,
+              color: const Color(0xFF0F191A).withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Jawabanmu hanya dilihat oleh psikolog, tidak oleh HR.',
+            style: TextStyle(
+              fontFamily: 'NimbusSans',
+              fontSize: 12,
+              color: AppColors.subtle.withValues(alpha: 0.9),
+            ),
+          ),
+          const SizedBox(height: 18),
+          ...List.generate(_options.length, (i) {
+            final selected = _selected == i;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _selected = i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.accentLight.withValues(alpha: 0.4)
+                        : const Color(0xFFFBFDFD),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.accent
+                          : const Color(0xFFEAF0F1),
+                      width: selected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        selected
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_off_rounded,
+                        size: 20,
+                        color: selected
+                            ? AppColors.accentDeep
+                            : AppColors.subtle,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _options[i],
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: AppColors.brand,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _selected == null
+                  ? null
+                  : () => Navigator.pop(context, _selected),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                disabledBackgroundColor: AppColors.brand.withValues(alpha: 0.4),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+              ),
+              child: const Text(
+                'Selesai',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],

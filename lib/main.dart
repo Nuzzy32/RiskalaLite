@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'pages/welcome_page.dart' hide AnimatedBuilder;
-import 'pages/login_page.dart';
-import 'pages/employee_login_page.dart';
-import 'pages/company_register_page.dart';
+import 'pages/auth/welcome_page.dart' hide AnimatedBuilder;
+import 'pages/auth/employee_login_page.dart';
+import 'pages/auth/company_register_page.dart';
 import 'pages/employee/main_shell.dart';
 import 'pages/employee/assessment_history_page.dart';
 import 'pages/employee/stress_page.dart';
 import 'pages/employee/report_history_page.dart';
+import 'pages/employee/counseling_page.dart';
+import 'pages/employee/privacy_page.dart';
 import 'pages/hr/hr_main_shell.dart';
-import 'pages/forgot_password_page.dart';
-import 'pages/otp_verification_page.dart';
-import 'pages/reset_password_page.dart';
+import 'pages/auth/forgot_password_page.dart';
+import 'pages/auth/otp_verification_page.dart';
+import 'pages/auth/reset_password_page.dart';
+import 'pages/psikolog/psikolog_login_page.dart';
+import 'pages/psikolog/psikolog_home_page.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 
@@ -32,9 +35,10 @@ class MyApp extends StatelessWidget {
       ),
       home: const _AppBootstrap(),
       routes: {
-        '/login': (context) => const LoginPage(),
         '/entry/employee': (context) => const EmployeeLoginPage(),
         '/entry/register': (context) => const CompanyRegisterPage(),
+        '/psikolog/login': (context) => const PsikologLoginPage(),
+        '/psikolog/home': (context) => const PsikologHomePage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-otp': (context) => const OtpVerificationPage(),
         '/reset-password': (context) => const ResetPasswordPage(),
@@ -46,6 +50,8 @@ class MyApp extends StatelessWidget {
         '/stress': (context) => const StressPage(),
         '/history': (context) => const AssessmentHistoryPage(),
         '/report-history': (context) => const ReportHistoryPage(),
+        '/counseling': (context) => const CounselingPage(),
+        '/privacy': (context) => const PrivacyPage(),
         // HR routes
         '/hr/home': (context) => const HrMainShell(),
         '/hr/report': (context) => const HrMainShell(initialTab: 2),
@@ -114,7 +120,11 @@ class _AppBootstrapState extends State<_AppBootstrap>
     // Auto-route based on session
     final hasSession = ApiService.token != null;
     if (hasSession) {
-      final route = ApiService.isHr ? '/hr/home' : '/home';
+      final route = ApiService.isPsikolog
+          ? '/psikolog/home'
+          : ApiService.isHr
+              ? '/hr/home'
+              : '/home';
       Navigator.pushReplacementNamed(context, route);
     } else {
       Navigator.pushReplacement(

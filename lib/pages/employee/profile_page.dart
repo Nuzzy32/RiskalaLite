@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
@@ -13,6 +14,15 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _dailyReminder = false;
+  TimeOfDay _reminderTime = NotificationService.defaultTime;
+  bool _wellnessConsent = ApiService.wellnessConsent;
+  bool _savingConsent = false;
+
+  String get _reminderTimeLabel {
+    final h = _reminderTime.hour.toString().padLeft(2, '0');
+    final m = _reminderTime.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 
   @override
   void initState() {
@@ -20,9 +30,52 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadReminderState();
   }
 
+  Future<void> _toggleConsent(bool v) async {
+    final previous = _wellnessConsent;
+    setState(() {
+      _wellnessConsent = v;
+      _savingConsent = true;
+    });
+    try {
+      final value = await ApiService.updateWellnessConsent(v);
+      if (!mounted) return;
+      setState(() {
+        _wellnessConsent = value;
+        _savingConsent = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value
+              ? 'Tim wellness dapat menghubungimu bila terdeteksi stres tinggi'
+              : 'Datamu hanya menyumbang ke statistik anonim'),
+          backgroundColor: AppColors.accent,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _wellnessConsent = previous; // roll back on failure
+        _savingConsent = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: const Color(0xFF9D174D),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadReminderState() async {
     final enabled = await NotificationService.isEnabled();
-    if (mounted) setState(() => _dailyReminder = enabled);
+    final time = await NotificationService.getTime();
+    if (mounted) {
+      setState(() {
+        _dailyReminder = enabled;
+        _reminderTime = time;
+      });
+    }
   }
 
   Future<void> _toggleReminder(bool v) async {
@@ -32,8 +85,27 @@ class _ProfilePageState extends State<ProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(v
-            ? 'Pengingat mood harian aktif (jam 09:00)'
+            ? 'Pengingat mood harian aktif (jam $_reminderTimeLabel)'
             : 'Pengingat mood harian dimatikan'),
+        backgroundColor: const Color(0xFF166534),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+      helpText: 'Jam pengingat harian',
+    );
+    if (picked == null) return;
+    setState(() => _reminderTime = picked);
+    await NotificationService.setTime(picked);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Pengingat disetel ke jam $_reminderTimeLabel'),
         backgroundColor: const Color(0xFF166534),
         duration: const Duration(seconds: 2),
       ),
@@ -80,7 +152,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF245A72), size: 16),
+                          child: const Icon(Icons.arrow_back_ios_new, color: AppColors.brand, size: 16),
                         ),
                       ),
                       const Text(
@@ -89,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontFamily: 'Public Sans',
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                           letterSpacing: -0.45,
                         ),
                       ),
@@ -99,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontFamily: 'Public Sans',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF61D1DB),
+                          color: AppColors.accent,
                           letterSpacing: 0.35,
                         ),
                       ),
@@ -111,7 +183,8 @@ class _ProfilePageState extends State<ProfilePage> {
               // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 120),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 140),
                   child: Column(
                     children: [
                       // Profile section
@@ -135,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ],
                                 color: const Color(0xFFE0F2F4),
                               ),
-                              child: const Icon(Icons.person, size: 56, color: Color(0xFF245A72)),
+                              child: const Icon(Icons.person, size: 56, color: AppColors.brand),
                             ),
                             const SizedBox(height: 24),
                             Text(
@@ -144,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 fontFamily: 'Public Sans',
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF245A72),
+                                color: AppColors.brand,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -156,23 +229,23 @@ class _ProfilePageState extends State<ProfilePage> {
                                 fontFamily: 'Public Sans',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF245A72).withValues(alpha: 0.7),
+                                color: AppColors.brand.withValues(alpha: 0.7),
                               ),
                             ),
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF61D1DB).withValues(alpha: 0.1),
+                                color: AppColors.accent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(9999),
                               ),
                               child: Text(
-                                'ID: ${ApiService.userId}',
+                                'NIP: ${ApiService.userNip}',
                                 style: const TextStyle(
                                   fontFamily: 'Public Sans',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF61D1DB),
+                                  color: AppColors.accent,
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -195,7 +268,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   fontFamily: 'Public Sans',
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                                  color: AppColors.brand.withValues(alpha: 0.5),
                                   letterSpacing: 0.6,
                                 ),
                               ),
@@ -213,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       color: Color(0xFFE0F2F4),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.notifications_outlined, color: Color(0xFF61D1DB), size: 18),
+                                    child: const Icon(Icons.notifications_outlined, color: AppColors.accent, size: 18),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
@@ -226,25 +299,57 @@ class _ProfilePageState extends State<ProfilePage> {
                                             fontFamily: 'Public Sans',
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
-                                            color: Color(0xFF245A72),
+                                            color: AppColors.brand,
                                           ),
                                         ),
                                         Text(
-                                          'Manage your daily focus time',
+                                          _dailyReminder
+                                              ? 'Mengingatkanmu check-in mood tiap hari'
+                                              : 'Nudge lembut agar tak lupa check-in',
                                           style: TextStyle(
                                             fontFamily: 'Public Sans',
                                             fontSize: 12,
-                                            color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                                            color: AppColors.brand.withValues(alpha: 0.6),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
+                                  if (_dailyReminder)
+                                    GestureDetector(
+                                      onTap: _pickReminderTime,
+                                      child: Container(
+                                        margin: const EdgeInsets.only(right: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.accent.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.schedule_rounded,
+                                                size: 14, color: AppColors.accentDeep),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              _reminderTimeLabel,
+                                              style: const TextStyle(
+                                                fontFamily: 'Public Sans',
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.accentDeep,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   Switch(
                                     value: _dailyReminder,
                                     onChanged: _toggleReminder,
                                     activeThumbColor: Colors.white,
-                                    activeTrackColor: const Color(0xFF61D1DB),
+                                    activeTrackColor: AppColors.accent,
                                     inactiveThumbColor: Colors.white,
                                     inactiveTrackColor: const Color(0xFFE2E8F0),
                                   ),
@@ -255,7 +360,85 @@ class _ProfilePageState extends State<ProfilePage> {
                             Container(
                               height: 1,
                               margin: const EdgeInsets.only(left: 16, right: 8),
-                              color: const Color(0xFF61D1DB).withValues(alpha: 0.1),
+                              color: AppColors.accent.withValues(alpha: 0.1),
+                            ),
+
+                            // Berbagi Sinyal Kesejahteraan (consent)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE0F2F4),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.shield_outlined,
+                                        color: AppColors.accent, size: 18),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Bagikan Sinyal Kesejahteraan',
+                                          style: TextStyle(
+                                            fontFamily: 'Public Sans',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.brand,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _wellnessConsent
+                                              ? 'Tim wellness dapat melihat namamu & menghubungi bila terdeteksi stres tinggi.'
+                                              : 'Namamu dirahasiakan. Data hanya menyumbang ke statistik anonim divisi.',
+                                          style: TextStyle(
+                                            fontFamily: 'Public Sans',
+                                            fontSize: 12,
+                                            height: 1.4,
+                                            color: AppColors.brand.withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _savingConsent
+                                      ? const SizedBox(
+                                          width: 36,
+                                          height: 36,
+                                          child: Center(
+                                            child: SizedBox(
+                                              width: 18, height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation(AppColors.accent),
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Switch(
+                                          value: _wellnessConsent,
+                                          onChanged: _toggleConsent,
+                                          activeThumbColor: Colors.white,
+                                          activeTrackColor: AppColors.accent,
+                                          inactiveThumbColor: Colors.white,
+                                          inactiveTrackColor: const Color(0xFFE2E8F0),
+                                        ),
+                                ],
+                              ),
+                            ),
+
+                            Container(
+                              height: 1,
+                              margin: const EdgeInsets.only(left: 16, right: 8),
+                              color: AppColors.accent.withValues(alpha: 0.1),
                             ),
 
                             // Privacy & Security
@@ -268,7 +451,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             Container(
                               height: 1,
                               margin: const EdgeInsets.only(left: 16, right: 8),
-                              color: const Color(0xFF61D1DB).withValues(alpha: 0.1),
+                              color: AppColors.accent.withValues(alpha: 0.1),
                             ),
 
                             // Info Perusahaan
@@ -296,13 +479,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFF61D1DB).withValues(alpha: 0.2),
+                                    color: AppColors.accent.withValues(alpha: 0.2),
                                   ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    Icon(Icons.logout, color: Color(0xFF245A72), size: 18),
+                                    Icon(Icons.logout, color: AppColors.brand, size: 18),
                                     SizedBox(width: 8),
                                     Text(
                                       'Log Out',
@@ -310,7 +493,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         fontFamily: 'Public Sans',
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFF245A72),
+                                        color: AppColors.brand,
                                       ),
                                     ),
                                   ],
@@ -356,7 +539,7 @@ class _ProfilePageState extends State<ProfilePage> {
               color: Color(0xFFE0F2F4),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF61D1DB), size: 18),
+            child: Icon(icon, color: AppColors.accent, size: 18),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -369,7 +552,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     fontFamily: 'Public Sans',
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF245A72),
+                    color: AppColors.brand,
                   ),
                 ),
                 Text(
@@ -377,13 +560,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(
                     fontFamily: 'Public Sans',
                     fontSize: 12,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                    color: AppColors.brand.withValues(alpha: 0.6),
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: const Color(0xFF245A72).withValues(alpha: 0.3), size: 20),
+          Icon(Icons.chevron_right, color: AppColors.brand.withValues(alpha: 0.3), size: 20),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../theme/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
@@ -40,7 +41,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
     super.initState();
     if (_isEdit) {
       final emp = widget.employee!;
-      _idController.text = emp['id_user']?.toString() ?? '';
+      _idController.text = (emp['nip'] ?? emp['id_user'])?.toString() ?? '';
       _namaController.text = emp['nama_user']?.toString() ?? '';
       _emailController.text = emp['email_user']?.toString() ?? '';
       _roleUser = (emp['role_user'] as num?)?.toInt() ?? 0;
@@ -204,7 +205,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         );
       } else {
         await ApiService.createEmployee(
-          idUser: _idController.text.trim().toUpperCase(),
+          nip: _idController.text.trim().toUpperCase(),
           namaUser: _namaController.text.trim(),
           emailUser: _emailController.text.trim(),
           passwdUser: _passController.text,
@@ -247,7 +248,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
             _buildHeader(context),
             Expanded(
               child: _loadingDepts
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
                   : SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
                       child: Form(
@@ -360,14 +361,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: hasFile
-                    ? const Color(0xFF61D1DB)
-                    : const Color(0xFF245A72).withValues(alpha: 0.15),
+                    ? AppColors.accent
+                    : AppColors.brand.withValues(alpha: 0.15),
                 width: hasFile ? 1.5 : 1,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF245A72).withValues(alpha: 0.05),
+                  color: AppColors.brand.withValues(alpha: 0.05),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -386,9 +387,9 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
             child: ElevatedButton(
               onPressed: _uploading ? null : _uploadFile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF245A72),
+                backgroundColor: AppColors.brand,
                 disabledBackgroundColor:
-                    const Color(0xFF245A72).withValues(alpha: 0.4),
+                    AppColors.brand.withValues(alpha: 0.4),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -432,7 +433,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
               style: TextStyle(
                 fontFamily: 'NimbusSans',
                 fontSize: 12,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                color: AppColors.brand.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -454,7 +455,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
           ),
           child: const Icon(
             Icons.cloud_upload_outlined,
-            color: Color(0xFF61D1DB),
+            color: AppColors.accent,
             size: 28,
           ),
         ),
@@ -465,7 +466,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
             fontFamily: 'Manrope',
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF245A72),
+            color: AppColors.brand,
           ),
         ),
         const SizedBox(height: 4),
@@ -474,14 +475,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
           style: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 11,
-            color: const Color(0xFF245A72).withValues(alpha: 0.4),
+            color: AppColors.brand.withValues(alpha: 0.4),
           ),
         ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
           decoration: BoxDecoration(
-            color: const Color(0xFF245A72),
+            color: AppColors.brand,
             borderRadius: BorderRadius.circular(99),
           ),
           child: const Text(
@@ -533,7 +534,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   fontFamily: 'NimbusSans',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF245A72),
+                  color: AppColors.brand,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -544,7 +545,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   style: TextStyle(
                     fontFamily: 'NimbusSans',
                     fontSize: 11,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                    color: AppColors.brand.withValues(alpha: 0.5),
                   ),
                 ),
             ],
@@ -552,7 +553,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         ),
         const Icon(
           Icons.check_circle_rounded,
-          color: Color(0xFF61D1DB),
+          color: AppColors.accent,
           size: 20,
         ),
       ],
@@ -563,7 +564,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF245A72).withValues(alpha: 0.05),
+        color: AppColors.brand.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -572,7 +573,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
           Icon(
             Icons.info_outline_rounded,
             size: 13,
-            color: const Color(0xFF245A72).withValues(alpha: 0.45),
+            color: AppColors.brand.withValues(alpha: 0.45),
           ),
           const SizedBox(width: 6),
           Text(
@@ -580,7 +581,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
             style: TextStyle(
               fontFamily: 'NimbusSans',
               fontSize: 11,
-              color: const Color(0xFF245A72).withValues(alpha: 0.5),
+              color: AppColors.brand.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -593,7 +594,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
       children: [
         Expanded(
           child: Divider(
-            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+            color: AppColors.brand.withValues(alpha: 0.1),
           ),
         ),
         Padding(
@@ -604,14 +605,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
               fontFamily: 'NimbusSans',
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF245A72).withValues(alpha: 0.35),
+              color: AppColors.brand.withValues(alpha: 0.35),
               letterSpacing: 0.3,
             ),
           ),
         ),
         Expanded(
           child: Divider(
-            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+            color: AppColors.brand.withValues(alpha: 0.1),
           ),
         ),
       ],
@@ -627,7 +628,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         gradient: LinearGradient(
           begin: Alignment(-0.7, -1),
           end: Alignment(0.7, 1),
-          colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+          colors: [AppColors.accentLight, AppColors.accent],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
@@ -645,7 +646,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                 color: Colors.white.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF245A72), size: 16),
+              child: const Icon(Icons.arrow_back_ios_new, color: AppColors.brand, size: 16),
             ),
           ),
           const SizedBox(width: 16),
@@ -658,7 +659,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   fontFamily: 'NimbusSans',
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                  color: AppColors.brand.withValues(alpha: 0.6),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -668,7 +669,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   fontFamily: 'Manrope',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF245A72),
+                  color: AppColors.brand,
                 ),
               ),
             ],
@@ -687,7 +688,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
           fontFamily: 'NimbusSans',
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF245A72).withValues(alpha: 0.5),
+          color: AppColors.brand.withValues(alpha: 0.5),
           letterSpacing: 0.8,
         ),
       ),
@@ -702,7 +703,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF245A72).withValues(alpha: 0.05),
+            color: AppColors.brand.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -717,7 +718,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
       height: 1,
       indent: 16,
       endIndent: 16,
-      color: const Color(0xFF245A72).withValues(alpha: 0.07),
+      color: AppColors.brand.withValues(alpha: 0.07),
     );
   }
 
@@ -745,24 +746,24 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
           fontFamily: 'NimbusSans',
           fontSize: 14,
           color: readOnly
-              ? const Color(0xFF245A72).withValues(alpha: 0.4)
-              : const Color(0xFF245A72),
+              ? AppColors.brand.withValues(alpha: 0.4)
+              : AppColors.brand,
           fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
           counterText: '',
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF61D1DB)),
+          prefixIcon: Icon(icon, size: 18, color: AppColors.accent),
           labelStyle: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
-            color: const Color(0xFF245A72).withValues(alpha: 0.6),
+            color: AppColors.brand.withValues(alpha: 0.6),
           ),
           hintStyle: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
-            color: const Color(0xFF245A72).withValues(alpha: 0.3),
+            color: AppColors.brand.withValues(alpha: 0.3),
           ),
           border: InputBorder.none,
           errorStyle: const TextStyle(fontFamily: 'NimbusSans', fontSize: 11),
@@ -793,30 +794,30 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         style: const TextStyle(
           fontFamily: 'NimbusSans',
           fontSize: 14,
-          color: Color(0xFF245A72),
+          color: AppColors.brand,
           fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
           labelText: 'Password',
           hintText: _isEdit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter',
-          prefixIcon: const Icon(Icons.lock_outline, size: 18, color: Color(0xFF61D1DB)),
+          prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.accent),
           suffixIcon: GestureDetector(
             onTap: () => setState(() => _obscurePass = !_obscurePass),
             child: Icon(
               _obscurePass ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               size: 18,
-              color: const Color(0xFF245A72).withValues(alpha: 0.4),
+              color: AppColors.brand.withValues(alpha: 0.4),
             ),
           ),
           labelStyle: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
-            color: const Color(0xFF245A72).withValues(alpha: 0.6),
+            color: AppColors.brand.withValues(alpha: 0.6),
           ),
           hintStyle: TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
-            color: const Color(0xFF245A72).withValues(alpha: 0.3),
+            color: AppColors.brand.withValues(alpha: 0.3),
           ),
           border: InputBorder.none,
           errorStyle: const TextStyle(fontFamily: 'NimbusSans', fontSize: 11),
@@ -841,7 +842,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Row(
           children: [
-            const Icon(Icons.apartment_outlined, size: 18, color: Color(0xFF61D1DB)),
+            const Icon(Icons.apartment_outlined, size: 18, color: AppColors.accent),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -851,13 +852,13 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                   fontSize: 14,
                   fontWeight: selectedName != null ? FontWeight.w600 : FontWeight.w400,
                   color: selectedName != null
-                      ? const Color(0xFF245A72)
-                      : const Color(0xFF245A72).withValues(alpha: 0.35),
+                      ? AppColors.brand
+                      : AppColors.brand.withValues(alpha: 0.35),
                 ),
               ),
             ),
             Icon(Icons.keyboard_arrow_down,
-                size: 20, color: const Color(0xFF245A72).withValues(alpha: 0.4)),
+                size: 20, color: AppColors.brand.withValues(alpha: 0.4)),
           ],
         ),
       ),
@@ -882,7 +883,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
               child: Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF245A72).withValues(alpha: 0.15),
+                  color: AppColors.brand.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -892,14 +893,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
               'Pilih Departemen',
               style: TextStyle(
                 fontFamily: 'Manrope', fontSize: 16,
-                fontWeight: FontWeight.w700, color: Color(0xFF245A72),
+                fontWeight: FontWeight.w700, color: AppColors.brand,
               ),
             ),
             const SizedBox(height: 16),
             if (_loadingDepts)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator(color: Color(0xFF245A72))),
+                child: Center(child: CircularProgressIndicator(color: AppColors.brand)),
               )
             else if (_deptError || _departments.isEmpty)
               Padding(
@@ -907,14 +908,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                 child: Column(
                   children: [
                     Icon(Icons.wifi_off_outlined, size: 40,
-                        color: const Color(0xFF245A72).withValues(alpha: 0.3)),
+                        color: AppColors.brand.withValues(alpha: 0.3)),
                     const SizedBox(height: 12),
                     Text(
                       'Gagal memuat departemen',
                       style: TextStyle(
                         fontFamily: 'NimbusSans',
                         fontSize: 14,
-                        color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                        color: AppColors.brand.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -930,7 +931,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                       icon: const Icon(Icons.refresh, size: 16),
                       label: const Text('Coba lagi'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF245A72),
+                        backgroundColor: AppColors.brand,
                         foregroundColor: Colors.white,
                         textStyle: const TextStyle(fontFamily: 'NimbusSans', fontWeight: FontWeight.w600),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -954,12 +955,12 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF245A72).withValues(alpha: 0.08)
+                          ? AppColors.brand.withValues(alpha: 0.08)
                           : const Color(0xFFF8FAFB),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFF245A72).withValues(alpha: 0.3)
+                            ? AppColors.brand.withValues(alpha: 0.3)
                             : const Color(0xFFE2E8F0),
                       ),
                     ),
@@ -972,12 +973,12 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
                               fontFamily: 'NimbusSans',
                               fontSize: 14,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: const Color(0xFF245A72),
+                              color: AppColors.brand,
                             ),
                           ),
                         ),
                         if (isSelected)
-                          const Icon(Icons.check_circle, size: 18, color: Color(0xFF245A72)),
+                          const Icon(Icons.check_circle, size: 18, color: AppColors.brand),
                       ],
                     ),
                   ),
@@ -997,14 +998,14 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.manage_accounts_outlined, size: 18, color: Color(0xFF61D1DB)),
+              const Icon(Icons.manage_accounts_outlined, size: 18, color: AppColors.accent),
               const SizedBox(width: 12),
               Text(
                 'Role',
                 style: TextStyle(
                   fontFamily: 'NimbusSans',
                   fontSize: 13,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                  color: AppColors.brand.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -1030,10 +1031,10 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF245A72) : const Color(0xFFF1F5F9),
+          color: selected ? AppColors.brand : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? const Color(0xFF245A72) : const Color(0xFFE2E8F0),
+            color: selected ? AppColors.brand : const Color(0xFFE2E8F0),
           ),
         ),
         child: Text(
@@ -1042,7 +1043,7 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
             fontFamily: 'NimbusSans',
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : const Color(0xFF245A72).withValues(alpha: 0.5),
+            color: selected ? Colors.white : AppColors.brand.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -1056,9 +1057,9 @@ class _HrAddEmployeePageState extends State<HrAddEmployeePage> {
       child: ElevatedButton(
         onPressed: _loading ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF245A72),
+          backgroundColor: AppColors.brand,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF245A72).withValues(alpha: 0.4),
+          disabledBackgroundColor: AppColors.brand.withValues(alpha: 0.4),
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),

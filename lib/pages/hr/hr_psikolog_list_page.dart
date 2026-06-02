@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 import 'hr_psikolog_form_page.dart';
 
@@ -127,7 +128,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                   child: child,
                 ),
                 child: _loading
-                    ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                    ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: AppColors.brand))
                     : _error != null
                         ? _buildError()
                         : RefreshIndicator(
@@ -142,7 +143,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addPsikolog,
-        backgroundColor: const Color(0xFF245A72),
+        backgroundColor: AppColors.brand,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add, size: 20),
         label: const Text('Tambah Psikolog',
@@ -158,7 +159,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment(-0.7, -1), end: Alignment(0.7, 1),
-          colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+          colors: [AppColors.accentLight, AppColors.accent],
         ),
         borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(32),
@@ -174,7 +175,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                   color: Colors.white.withValues(alpha: 0.3),
                   shape: BoxShape.circle),
               child: const Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF245A72), size: 16),
+                  color: AppColors.brand, size: 16),
             ),
           ),
           const SizedBox(width: 16),
@@ -185,12 +186,12 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                   style: TextStyle(
                       fontFamily: 'NimbusSans', fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                      color: AppColors.brand.withValues(alpha: 0.6),
                       letterSpacing: 1.2)),
               const Text('Kelola Psikolog',
                   style: TextStyle(
                       fontFamily: 'Manrope', fontSize: 22,
-                      fontWeight: FontWeight.w700, color: Color(0xFF245A72))),
+                      fontWeight: FontWeight.w700, color: AppColors.brand)),
             ],
           ),
         ],
@@ -206,7 +207,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
           const Icon(Icons.error_outline, color: Color(0xFF9D174D), size: 48),
           const SizedBox(height: 12),
           Text(_error!,
-              style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+              style: const TextStyle(fontFamily: 'NimbusSans', color: AppColors.brand)),
           const SizedBox(height: 12),
           ElevatedButton(onPressed: _load, child: const Text('Coba lagi')),
         ],
@@ -220,19 +221,19 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
       children: [
         const SizedBox(height: 80),
         Icon(Icons.psychology_outlined, size: 64,
-            color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+            color: AppColors.brand.withValues(alpha: 0.2)),
         const SizedBox(height: 12),
         Text('Belum ada psikolog terdaftar',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontFamily: 'NimbusSans', fontSize: 15,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5))),
+                color: AppColors.brand.withValues(alpha: 0.5))),
         const SizedBox(height: 8),
         Text('Tap "Tambah Psikolog" untuk mulai',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontFamily: 'NimbusSans', fontSize: 13,
-                color: const Color(0xFF245A72).withValues(alpha: 0.4))),
+                color: AppColors.brand.withValues(alpha: 0.4))),
       ],
     );
   }
@@ -259,7 +260,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF245A72).withValues(alpha: 0.04),
+              color: AppColors.brand.withValues(alpha: 0.04),
               blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
@@ -271,10 +272,10 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
               Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
-                    color: const Color(0xFF245A72).withValues(alpha: 0.08),
+                    color: AppColors.brand.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.psychology_outlined,
-                    color: Color(0xFF245A72), size: 22),
+                    color: AppColors.brand, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -285,7 +286,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                         style: const TextStyle(
                             fontFamily: 'Manrope', fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF245A72))),
+                            color: AppColors.brand)),
                     if ((p['spesialisasi']?.toString().isNotEmpty ?? false))
                       Text(p['spesialisasi'].toString(),
                           style: const TextStyle(
@@ -306,7 +307,7 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                 child: Text(p['email']?.toString() ?? '-',
                     style: const TextStyle(
                         fontFamily: 'NimbusSans', fontSize: 12,
-                        color: Color(0xFF568B8F)),
+                        color: AppColors.subtle),
                     overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 12),
@@ -321,11 +322,11 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                       fontWeight: FontWeight.w700,
                       color: caseload >= 3
                           ? const Color(0xFF9D174D)
-                          : const Color(0xFF568B8F))),
+                          : AppColors.subtle)),
             ],
           ),
           const SizedBox(height: 12),
-          Divider(height: 1, color: const Color(0xFF245A72).withValues(alpha: 0.06)),
+          Divider(height: 1, color: AppColors.brand.withValues(alpha: 0.06)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -335,14 +336,14 @@ class _HrPsikologListPageState extends State<HrPsikologListPage> {
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Edit'),
                   style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF245A72),
+                      foregroundColor: AppColors.brand,
                       textStyle: const TextStyle(
                           fontFamily: 'NimbusSans',
                           fontWeight: FontWeight.w700)),
                 ),
               ),
               Container(width: 1, height: 20,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.08)),
+                  color: AppColors.brand.withValues(alpha: 0.08)),
               Expanded(
                 child: TextButton.icon(
                   onPressed: () => _deletePsikolog(p),

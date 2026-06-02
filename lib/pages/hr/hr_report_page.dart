@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 import 'hr_report_detail_page.dart';
 
@@ -10,7 +11,8 @@ class HrReportPage extends StatefulWidget {
   State<HrReportPage> createState() => _HrReportPageState();
 }
 
-class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderStateMixin {
+class _HrReportPageState extends State<HrReportPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   String _selectedDivision = 'All';
@@ -64,12 +66,15 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         divisionsSet.add(division);
         return _Submission(
           idUser: a['id_user']?.toString() ?? '',
-          name: (user?['nama_user']?.toString().split(' ').first ?? '-').toUpperCase(),
+          name: (user?['nama_user']?.toString().split(' ').first ?? '-')
+              .toUpperCase(),
           fullName: user?['nama_user']?.toString() ?? '-',
           division: division,
           totalScore: (a['total_score'] as num?)?.toInt() ?? 0,
           kategoriStres: (a['kategori_stres'] as num?)?.toInt() ?? 1,
-          date: DateTime.tryParse(a['tgl_SA']?.toString() ?? '') ?? DateTime.now(),
+          date:
+              DateTime.tryParse(a['tgl_SA']?.toString() ?? '') ??
+              DateTime.now(),
         );
       }).toList();
 
@@ -90,7 +95,9 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
           psikolog: r['psikolog'] is Map<String, dynamic>
               ? r['psikolog'] as Map<String, dynamic>
               : null,
-          date: DateTime.tryParse(r['tgl_IR']?.toString() ?? '') ?? DateTime.now(),
+          date:
+              DateTime.tryParse(r['tgl_IR']?.toString() ?? '') ??
+              DateTime.now(),
         );
       }).toList();
 
@@ -119,10 +126,18 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
 
   List<_Submission> get _filteredSubmissions {
     return _allSubmissions.where((s) {
-      if (_selectedDivision != 'All' && s.division != _selectedDivision) return false;
-      if (_selectedRisk != 'All' && _riskFromKategori(s.kategoriStres) != _selectedRisk) return false;
+      if (_selectedDivision != 'All' && s.division != _selectedDivision) {
+        return false;
+      }
+      if (_selectedRisk != 'All' &&
+          _riskFromKategori(s.kategoriStres) != _selectedRisk) {
+        return false;
+      }
       if (_dateRange != null) {
-        if (s.date.isBefore(_dateRange!.start) || s.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) return false;
+        if (s.date.isBefore(_dateRange!.start) ||
+            s.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) {
+          return false;
+        }
       }
       return true;
     }).toList();
@@ -130,17 +145,38 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
 
   List<_EmployeeReport> get _filteredEmployeeReports {
     return _allEmployeeReports.where((r) {
-      if (_selectedDivision != 'All' && r.division != _selectedDivision) return false;
-      if (_selectedRisk != 'All' && _riskFromStress(r.tingkatStres) != _selectedRisk) return false;
+      if (_selectedDivision != 'All' && r.division != _selectedDivision) {
+        return false;
+      }
+      if (_selectedRisk != 'All' &&
+          _riskFromStress(r.tingkatStres) != _selectedRisk) {
+        return false;
+      }
       if (_dateRange != null) {
-        if (r.date.isBefore(_dateRange!.start) || r.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) return false;
+        if (r.date.isBefore(_dateRange!.start) ||
+            r.date.isAfter(_dateRange!.end.add(const Duration(days: 1)))) {
+          return false;
+        }
       }
       return true;
     }).toList();
   }
 
   String _formatDate(DateTime d) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[d.month - 1]} ${d.day}';
   }
 
@@ -149,15 +185,17 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
       context: context,
       firstDate: DateTime(2024),
       lastDate: DateTime(2027, 12, 31),
-      initialDateRange: _dateRange ?? DateTimeRange(
-        start: DateTime.now().subtract(const Duration(days: 30)),
-        end: DateTime.now(),
-      ),
+      initialDateRange:
+          _dateRange ??
+          DateTimeRange(
+            start: DateTime.now().subtract(const Duration(days: 30)),
+            end: DateTime.now(),
+          ),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF245A72),
+              primary: AppColors.brand,
               onPrimary: Colors.white,
               surface: Colors.white,
             ),
@@ -188,24 +226,32 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  opacity: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,
+                  ),
                   child: child,
                 ),
                 child: _loading
-                    ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                    ? const Center(
+                        key: ValueKey('loading'),
+                        child: CircularProgressIndicator(
+                          color: AppColors.brand,
+                        ),
+                      )
                     : _error != null
-                        ? _buildErrorState()
-                        : RefreshIndicator(
-                            key: const ValueKey('content'),
-                            onRefresh: _loadData,
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                _buildQuestionnaireTab(),
-                                _buildLaporanEmployeeTab(),
-                              ],
-                            ),
-                          ),
+                    ? _buildErrorState()
+                    : RefreshIndicator(
+                        key: const ValueKey('content'),
+                        onRefresh: _loadData,
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildQuestionnaireTab(),
+                            _buildLaporanEmployeeTab(),
+                          ],
+                        ),
+                      ),
               ),
             ),
           ],
@@ -221,8 +267,13 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         children: [
           const Icon(Icons.error_outline, size: 48, color: Color(0xFF9D174D)),
           const SizedBox(height: 12),
-          Text(_error ?? 'Terjadi kesalahan',
-              style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+          Text(
+            _error ?? 'Terjadi kesalahan',
+            style: const TextStyle(
+              fontFamily: 'NimbusSans',
+              color: AppColors.brand,
+            ),
+          ),
           const SizedBox(height: 12),
           ElevatedButton(onPressed: _loadData, child: const Text('Coba lagi')),
         ],
@@ -238,7 +289,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         gradient: const LinearGradient(
           begin: Alignment(-0.7, -1),
           end: Alignment(0.7, 1),
-          colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+          colors: [AppColors.accentLight, AppColors.accent],
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
@@ -246,7 +297,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF245A72).withValues(alpha: 0.1),
+            color: AppColors.brand.withValues(alpha: 0.1),
             blurRadius: 25,
             offset: const Offset(0, 10),
             spreadRadius: -5,
@@ -266,7 +317,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                   fontFamily: 'NimbusSans',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                  color: AppColors.brand.withValues(alpha: 0.6),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -277,7 +328,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                   fontFamily: 'NimbusSans',
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF245A72),
+                  color: AppColors.brand,
                   height: 1.2,
                 ),
               ),
@@ -288,7 +339,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               width: 44,
               height: 44,
               color: const Color(0xFFE0F2F4),
-              child: const Icon(Icons.person, color: Color(0xFF245A72), size: 22),
+              child: const Icon(Icons.person, color: AppColors.brand, size: 22),
             ),
           ),
         ],
@@ -317,7 +368,12 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               label: 'Filter by Risk Level',
               value: _selectedRisk,
               items: risks,
-              displayMap: {'low': 'Low', 'moderate': 'Moderate', 'high': 'High', 'All': 'All'},
+              displayMap: {
+                'low': 'Low',
+                'moderate': 'Moderate',
+                'high': 'High',
+                'All': 'All',
+              },
               onChanged: (v) => setState(() => _selectedRisk = v ?? 'All'),
             ),
           ),
@@ -345,16 +401,23 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         child: DropdownButton<String>(
           value: safeValue,
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, color: const Color(0xFF245A72).withValues(alpha: 0.5), size: 20),
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: AppColors.brand.withValues(alpha: 0.5),
+            size: 20,
+          ),
           style: const TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF245A72),
+            color: AppColors.brand,
           ),
           items: items.map((item) {
             final display = displayMap?[item] ?? item;
-            return DropdownMenuItem(value: item, child: Text(display, overflow: TextOverflow.ellipsis));
+            return DropdownMenuItem(
+              value: item,
+              child: Text(display, overflow: TextOverflow.ellipsis),
+            );
           }).toList(),
           onChanged: onChanged,
         ),
@@ -378,14 +441,16 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             color: hasRange ? const Color(0xFFE0F2F4) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: hasRange ? const Color(0xFF61D1DB) : const Color(0xFFE2E8F0),
+              color: hasRange ? AppColors.accent : const Color(0xFFE2E8F0),
             ),
           ),
           child: Row(
             children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 18,
-                  color: const Color(0xFF245A72).withValues(alpha: hasRange ? 0.8 : 0.5)),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 18,
+                color: AppColors.brand.withValues(alpha: hasRange ? 0.8 : 0.5),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -394,19 +459,27 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                     fontFamily: 'NimbusSans',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF245A72).withValues(alpha: hasRange ? 1.0 : 0.5),
+                    color: AppColors.brand.withValues(
+                      alpha: hasRange ? 1.0 : 0.5,
+                    ),
                   ),
                 ),
               ),
               if (hasRange)
                 GestureDetector(
                   onTap: () => setState(() => _dateRange = null),
-                  child: Icon(Icons.close, size: 16,
-                      color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+                  child: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: AppColors.brand.withValues(alpha: 0.5),
+                  ),
                 )
               else
-                Icon(Icons.keyboard_arrow_down, size: 20,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: AppColors.brand.withValues(alpha: 0.5),
+                ),
             ],
           ),
         ),
@@ -425,12 +498,12 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         child: TabBar(
           controller: _tabController,
           indicator: BoxDecoration(
-            color: const Color(0xFF245A72),
+            color: AppColors.brand,
             borderRadius: BorderRadius.circular(10),
           ),
           indicatorSize: TabBarIndicatorSize.tab,
           labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xFF245A72),
+          unselectedLabelColor: AppColors.brand,
           labelStyle: const TextStyle(
             fontFamily: 'NimbusSans',
             fontSize: 13,
@@ -465,7 +538,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             style: TextStyle(
               fontFamily: 'NimbusSans',
               fontSize: 13,
-              color: const Color(0xFF245A72).withValues(alpha: 0.5),
+              color: AppColors.brand.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -481,7 +554,9 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             ),
           ),
           if (submissions.isEmpty)
-            _buildEmptyState('Tidak ada data questionnaire\nsesuai filter yang dipilih')
+            _buildEmptyState(
+              'Tidak ada data questionnaire\nsesuai filter yang dipilih',
+            )
           else
             ...submissions.map((s) => _buildSubmissionRow(s)),
         ],
@@ -503,7 +578,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             style: TextStyle(
               fontFamily: 'NimbusSans',
               fontSize: 13,
-              color: const Color(0xFF245A72).withValues(alpha: 0.5),
+              color: AppColors.brand.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -522,8 +597,11 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.inbox_outlined, size: 48,
-                color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+            Icon(
+              Icons.inbox_outlined,
+              size: 48,
+              color: AppColors.brand.withValues(alpha: 0.2),
+            ),
             const SizedBox(height: 12),
             Text(
               message,
@@ -531,7 +609,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               style: TextStyle(
                 fontFamily: 'NimbusSans',
                 fontSize: 14,
-                color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                color: AppColors.brand.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -549,7 +627,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
           fontFamily: 'NimbusSans',
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF245A72).withValues(alpha: 0.4),
+          color: AppColors.brand.withValues(alpha: 0.4),
           letterSpacing: 0.5,
         ),
       ),
@@ -566,7 +644,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
               employeeName: s.fullName,
               division: s.division,
               riskLevel: _riskFromKategori(s.kategoriStres),
-              stressScore: ((s.totalScore / 50) * 100).clamp(0, 100).round(),
+              stressScore: ((s.totalScore / 40) * 100).clamp(0, 100).round(),
               reportDate: _formatDate(s.date),
             ),
           ),
@@ -576,7 +654,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: const Color(0xFF245A72).withValues(alpha: 0.06)),
+            bottom: BorderSide(color: AppColors.brand.withValues(alpha: 0.06)),
           ),
         ),
         child: Row(
@@ -589,7 +667,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                   fontFamily: 'NimbusSans',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF245A72),
+                  color: AppColors.brand,
                 ),
               ),
             ),
@@ -600,11 +678,14 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 style: TextStyle(
                   fontFamily: 'NimbusSans',
                   fontSize: 13,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.7),
+                  color: AppColors.brand.withValues(alpha: 0.7),
                 ),
               ),
             ),
-            Expanded(flex: 2, child: _buildRiskBadge(_riskFromKategori(s.kategoriStres))),
+            Expanded(
+              flex: 2,
+              child: _buildRiskBadge(_riskFromKategori(s.kategoriStres)),
+            ),
             Expanded(
               flex: 2,
               child: Text(
@@ -613,7 +694,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 style: TextStyle(
                   fontFamily: 'NimbusSans',
                   fontSize: 12,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                  color: AppColors.brand.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -674,7 +755,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF245A72).withValues(alpha: 0.04),
+              color: AppColors.brand.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -695,7 +776,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                           fontFamily: 'NimbusSans',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -704,14 +785,17 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                         style: TextStyle(
                           fontFamily: 'NimbusSans',
                           fontSize: 12,
-                          color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                          color: AppColors.brand.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(9999),
@@ -732,7 +816,10 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE0F2F4),
                     borderRadius: BorderRadius.circular(6),
@@ -743,7 +830,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                       fontFamily: 'NimbusSans',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF245A72),
+                      color: AppColors.brand,
                     ),
                   ),
                 ),
@@ -753,7 +840,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                   style: TextStyle(
                     fontFamily: 'NimbusSans',
                     fontSize: 12,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
+                    color: AppColors.brand.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -767,7 +854,7 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 fontFamily: 'NimbusSans',
                 fontSize: 13,
                 height: 1.5,
-                color: const Color(0xFF245A72).withValues(alpha: 0.7),
+                color: AppColors.brand.withValues(alpha: 0.7),
               ),
             ),
             if (r.psikolog != null) ...[
@@ -782,8 +869,11 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.psychology_outlined,
-                        size: 14, color: Color(0xFF166534)),
+                    const Icon(
+                      Icons.psychology_outlined,
+                      size: 14,
+                      color: Color(0xFF166534),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Column(
@@ -798,13 +888,18 @@ class _HrReportPageState extends State<HrReportPage> with SingleTickerProviderSt
                               color: Color(0xFF166534),
                             ),
                           ),
-                          if ((r.psikolog!['spesialisasi']?.toString().isNotEmpty ?? false))
+                          if ((r.psikolog!['spesialisasi']
+                                  ?.toString()
+                                  .isNotEmpty ??
+                              false))
                             Text(
                               r.psikolog!['spesialisasi'].toString(),
                               style: TextStyle(
                                 fontFamily: 'NimbusSans',
                                 fontSize: 11,
-                                color: const Color(0xFF166534).withValues(alpha: 0.75),
+                                color: const Color(
+                                  0xFF166534,
+                                ).withValues(alpha: 0.75),
                               ),
                             ),
                         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../../theme/app_colors.dart';
+import '../../services/api_service.dart';
 
 class EmployeeLoginPage extends StatefulWidget {
   const EmployeeLoginPage({super.key});
@@ -235,7 +236,7 @@ class _Header extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-            color: const Color(0xFF245A72),
+            color: AppColors.brand,
             onPressed: onBack,
           ),
           const SizedBox(width: 4),
@@ -258,7 +259,7 @@ class _Header extends StatelessWidget {
                 fontFamily: 'Manrope',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF245A72),
+                color: AppColors.brand,
                 letterSpacing: -0.3,
               ),
             ),
@@ -290,8 +291,8 @@ class _StepPills extends StatelessWidget {
             height: 8,
             decoration: BoxDecoration(
               color: active
-                  ? const Color(0xFF245A72)
-                  : const Color(0xFF245A72).withValues(alpha: 0.2),
+                  ? AppColors.brand
+                  : AppColors.brand.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -346,7 +347,7 @@ class _CodeStep extends StatelessWidget {
             fontWeight: FontWeight.w700,
             fontSize: 20,
             letterSpacing: 4,
-            color: Color(0xFF245A72),
+            color: AppColors.brand,
           ),
           decoration: InputDecoration(
             labelText: 'Kode Perusahaan',
@@ -357,7 +358,7 @@ class _CodeStep extends StatelessWidget {
             errorText: error,
             prefixIcon: const Icon(
               Icons.apartment_rounded,
-              color: Color(0xFF61D1DB),
+              color: AppColors.accent,
             ),
             filled: true,
             fillColor: Colors.white,
@@ -375,7 +376,7 @@ class _CodeStep extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
-                color: Color(0xFF61D1DB),
+                color: AppColors.accent,
                 width: 2,
               ),
             ),
@@ -395,8 +396,8 @@ class _CodeStep extends StatelessWidget {
           child: ElevatedButton(
             onPressed: validating ? null : onSubmit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF245A72),
-              disabledBackgroundColor: const Color(0xFF245A72).withValues(alpha: 0.5),
+              backgroundColor: AppColors.brand,
+              disabledBackgroundColor: AppColors.brand.withValues(alpha: 0.5),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -426,6 +427,22 @@ class _CodeStep extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => Navigator.pushNamed(context, '/psikolog/login'),
+            icon: const Icon(Icons.psychology_outlined, size: 18, color: Color(0xFF5A8A96)),
+            label: const Text(
+              'Masuk sebagai Psikolog',
+              style: TextStyle(
+                fontFamily: 'Public Sans',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5A8A96),
+              ),
             ),
           ),
         ),
@@ -481,7 +498,7 @@ class _CredentialsStep extends StatelessWidget {
               children: [
                 const Icon(
                   Icons.verified_rounded,
-                  color: Color(0xFF245A72),
+                  color: AppColors.brand,
                   size: 20,
                 ),
                 const SizedBox(width: 10),
@@ -503,7 +520,7 @@ class _CredentialsStep extends StatelessWidget {
                           fontFamily: 'Manrope',
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                         ),
                       ),
                     ],
@@ -521,7 +538,7 @@ class _CredentialsStep extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Public Sans',
             fontSize: 15,
-            color: Color(0xFF245A72),
+            color: AppColors.brand,
           ),
           decoration: _inputDecor(
             label: 'NIP',
@@ -537,7 +554,7 @@ class _CredentialsStep extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Public Sans',
             fontSize: 15,
-            color: Color(0xFF245A72),
+            color: AppColors.brand,
           ),
           decoration: _inputDecor(
             label: 'Kata Sandi',
@@ -601,7 +618,7 @@ class _CredentialsStep extends StatelessWidget {
             child: const Text(
               'Lupa Kata Sandi?',
               style: TextStyle(
-                color: Color(0xFF61D1DB),
+                color: AppColors.accent,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -614,9 +631,9 @@ class _CredentialsStep extends StatelessWidget {
           child: ElevatedButton(
             onPressed: loggingIn ? null : onSubmit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF245A72),
+              backgroundColor: AppColors.brand,
               disabledBackgroundColor:
-                  const Color(0xFF245A72).withValues(alpha: 0.5),
+                  AppColors.brand.withValues(alpha: 0.5),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -662,7 +679,7 @@ class _CredentialsStep extends StatelessWidget {
         fontFamily: 'Public Sans',
         color: Color(0xFF5A8A96),
       ),
-      prefixIcon: Icon(icon, color: const Color(0xFF61D1DB), size: 20),
+      prefixIcon: Icon(icon, color: AppColors.accent, size: 20),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -675,7 +692,7 @@ class _CredentialsStep extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF61D1DB), width: 2),
+        borderSide: const BorderSide(color: AppColors.accent, width: 2),
       ),
     );
   }

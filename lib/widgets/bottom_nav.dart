@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class NavItem {
   final String id;
@@ -135,7 +136,7 @@ class _BottomNavState extends State<BottomNav>
                           radius: 1.2,
                           colors: [
                             const Color(0xFF8EEDF5).withValues(alpha: 0.35 * glow),
-                            const Color(0xFF61D1DB).withValues(alpha: 0.12 * glow),
+                            AppColors.accent.withValues(alpha: 0.12 * glow),
                             Colors.transparent,
                           ],
                           stops: const [0.0, 0.4, 1.0],
@@ -252,7 +253,7 @@ class _BottomNavState extends State<BottomNav>
                           ),
                           // Extra wide ambient
                           BoxShadow(
-                            color: const Color(0xFF61D1DB).withValues(alpha: 0.3),
+                            color: AppColors.accent.withValues(alpha: 0.3),
                             blurRadius: 30 * glow,
                             spreadRadius: 4,
                           ),

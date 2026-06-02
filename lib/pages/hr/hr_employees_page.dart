@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../data/division_info.dart';
 import '../../services/api_service.dart';
@@ -25,7 +26,10 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final employees = await ApiService.getEmployees();
       final divisions = await ApiService.getStressDivisions();
@@ -37,10 +41,15 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
       }
 
       double avg = 0;
-      if (divisions.isNotEmpty) {
-        final total = divisions.fold<double>(
-            0, (sum, d) => sum + ((d['avg_score'] as num?)?.toDouble() ?? 0));
-        avg = ((total / divisions.length) / 50 * 100).clamp(0, 100);
+      final visibleDivisions = divisions
+          .where((d) => d['suppressed'] != true && d['avg_score'] != null)
+          .toList();
+      if (visibleDivisions.isNotEmpty) {
+        final total = visibleDivisions.fold<double>(
+          0,
+          (sum, d) => sum + ((d['avg_score'] as num?)?.toDouble() ?? 0),
+        );
+        avg = ((total / visibleDivisions.length) / 40 * 100).clamp(0, 100);
       }
 
       setState(() {
@@ -62,10 +71,10 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
     final stressLabel = _avgStress == 0
         ? 'NO DATA'
         : _avgStress < 40
-            ? 'OPTIMAL'
-            : _avgStress < 70
-                ? 'MODERATE'
-                : 'HIGH';
+        ? 'OPTIMAL'
+        : _avgStress < 70
+        ? 'MODERATE'
+        : 'HIGH';
 
     final maxCount = _divisionCounts.values.isEmpty
         ? 1
@@ -93,15 +102,33 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Color(0xFF9D174D), size: 18),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Color(0xFF9D174D),
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(_error!,
-                              style: const TextStyle(fontFamily: 'NimbusSans', fontSize: 13, color: Color(0xFF9D174D))),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(
+                              fontFamily: 'NimbusSans',
+                              fontSize: 13,
+                              color: Color(0xFF9D174D),
+                            ),
+                          ),
                         ),
                         GestureDetector(
                           onTap: _loadData,
-                          child: const Text('Retry', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF9D174D))),
+                          child: const Text(
+                            'Retry',
+                            style: TextStyle(
+                              fontFamily: 'NimbusSans',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF9D174D),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -117,16 +144,20 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                           fontFamily: 'Manrope',
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                           letterSpacing: -0.6,
                         ),
                       ),
                       ClipOval(
                         child: Container(
-                          width: 40, height: 40,
+                          width: 40,
+                          height: 40,
                           color: const Color(0xFFE0F2F4),
-                          child: const Icon(Icons.person,
-                              color: Color(0xFF245A72), size: 20),
+                          child: const Icon(
+                            Icons.person,
+                            color: AppColors.brand,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
@@ -144,7 +175,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF245A72).withValues(alpha: 0.05),
+                          color: AppColors.brand.withValues(alpha: 0.05),
                           blurRadius: 25,
                           offset: const Offset(0, 10),
                           spreadRadius: -5,
@@ -160,7 +191,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                             fontFamily: 'Manrope',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                            color: AppColors.brand.withValues(alpha: 0.6),
                             height: 1.43,
                           ),
                         ),
@@ -169,8 +200,11 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                             ? const SizedBox(
                                 height: 192,
                                 child: Center(
-                                    child: CircularProgressIndicator(
-                                        color: Color(0xFF245A72))))
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.brand,
+                                  ),
+                                ),
+                              )
                             : SizedBox(
                                 width: 192,
                                 height: 192,
@@ -186,7 +220,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                                             fontFamily: 'Liberation Sans',
                                             fontSize: 30,
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF245A72),
+                                            color: AppColors.brand,
                                           ),
                                         ),
                                         Text(
@@ -195,7 +229,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                                             fontFamily: 'Liberation Sans',
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF61D1DB),
+                                            color: AppColors.accent,
                                             letterSpacing: 1,
                                           ),
                                         ),
@@ -219,7 +253,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                       fontFamily: 'Manrope',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF245A72),
+                      color: AppColors.brand,
                     ),
                   ),
                 ),
@@ -232,7 +266,8 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                           child: Padding(
                             padding: EdgeInsets.all(24),
                             child: CircularProgressIndicator(
-                                color: Color(0xFF245A72)),
+                              color: AppColors.brand,
+                            ),
                           ),
                         )
                       : Column(
@@ -243,8 +278,7 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                               name: info.name,
                               icon: info.icon,
                               count: count,
-                              barFraction:
-                                  maxCount > 0 ? count / maxCount : 0,
+                              barFraction: maxCount > 0 ? count / maxCount : 0,
                             );
                           }).toList(),
                         ),
@@ -270,7 +304,8 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) => HrDivisionDetailPage(divisionName: name)),
+            builder: (_) => HrDivisionDetailPage(divisionName: name),
+          ),
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
@@ -281,13 +316,17 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
           child: Row(
             children: [
               Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
+                  color: AppColors.accentLight.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 20,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.6)),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.brand.withValues(alpha: 0.6),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -296,16 +335,24 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(name,
-                            style: const TextStyle(
-                                fontFamily: 'NimbusSans', fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF245A72))),
-                        Text('$count',
-                            style: const TextStyle(
-                                fontFamily: 'NimbusSans', fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF245A72))),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontFamily: 'NimbusSans',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.brand,
+                          ),
+                        ),
+                        Text(
+                          '$count',
+                          style: const TextStyle(
+                            fontFamily: 'NimbusSans',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.brand,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -313,8 +360,9 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                       height: 12,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(9999)),
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(9999),
+                      ),
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: barFraction,
@@ -322,7 +370,8 @@ class _HrEmployeesPageState extends State<HrEmployeesPage> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(9999),
                             gradient: const LinearGradient(
-                                colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)]),
+                              colors: [AppColors.accentLight, AppColors.accent],
+                            ),
                           ),
                         ),
                       ),
@@ -347,8 +396,10 @@ class _DonutChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
     const strokeWidth = 16.0;
-    final rect =
-        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+    final rect = Rect.fromCircle(
+      center: center,
+      radius: radius - strokeWidth / 2,
+    );
 
     canvas.drawCircle(
       center,
@@ -375,7 +426,7 @@ class _DonutChartPainter extends CustomPainter {
         ..shader = SweepGradient(
           startAngle: -pi / 2,
           endAngle: -pi / 2 + sweepAngle,
-          colors: const [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+          colors: const [AppColors.accentLight, AppColors.accent],
           stops: const [0.0, 1.0],
           transform: const GradientRotation(-pi / 2),
         ).createShader(rect),

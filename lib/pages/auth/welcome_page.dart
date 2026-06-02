@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -173,7 +174,7 @@ class _WelcomePageState extends State<WelcomePage>
                           fontFamily: 'Public Sans',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                           letterSpacing: -0.75,
                           height: 1.25,
                         ),
@@ -187,7 +188,7 @@ class _WelcomePageState extends State<WelcomePage>
                           fontFamily: 'Public Sans',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                           letterSpacing: -0.75,
                           height: 1.25,
                         ),
@@ -235,11 +236,16 @@ class _WelcomePageState extends State<WelcomePage>
                           );
                         },
                         child: ShimmerButton(
-                          onPressed: () => Navigator.pushNamed(context, '/entry/employee'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/entry/employee'),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.badge_outlined, color: Colors.white, size: 18),
+                              Icon(
+                                Icons.badge_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                               SizedBox(width: 10),
                               Text(
                                 'Masuk sebagai Pegawai',
@@ -273,13 +279,16 @@ class _WelcomePageState extends State<WelcomePage>
                           width: double.infinity,
                           height: 56,
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pushNamed(context, '/entry/register'),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/entry/register'),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                color: Color(0xFF245A72),
+                                color: AppColors.brand,
                                 width: 1.5,
                               ),
-                              backgroundColor: Colors.white.withValues(alpha: 0.55),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.55,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(9999),
                               ),
@@ -289,7 +298,7 @@ class _WelcomePageState extends State<WelcomePage>
                               children: [
                                 Icon(
                                   Icons.business_rounded,
-                                  color: Color(0xFF245A72),
+                                  color: AppColors.brand,
                                   size: 18,
                                 ),
                                 SizedBox(width: 10),
@@ -299,7 +308,7 @@ class _WelcomePageState extends State<WelcomePage>
                                     fontFamily: 'Public Sans',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF245A72),
+                                    color: AppColors.brand,
                                     letterSpacing: 0.1,
                                   ),
                                 ),
@@ -441,7 +450,7 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 ..setEntry(3, 2, 0.001)
                 ..rotateX(rotX * 0.5)
                 ..rotateY(rotY * 0.5)
-                ..scale(outerScale, outerScale, 1.0),
+                ..scaleByDouble(outerScale, outerScale, 1.0, 1.0),
               child: Container(
                 width: 320,
                 height: 320,
@@ -466,7 +475,7 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 ..setEntry(3, 2, 0.001)
                 ..rotateX(rotX * 0.8)
                 ..rotateY(rotY * 0.8)
-                ..scale(middleScale, middleScale, 1.0),
+                ..scaleByDouble(middleScale, middleScale, 1.0, 1.0),
               child: Container(
                 width: 240,
                 height: 240,
@@ -491,7 +500,7 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                 ..setEntry(3, 2, 0.001)
                 ..rotateX(rotX)
                 ..rotateY(rotY)
-                ..scale(innerScale, innerScale, 1.0),
+                ..scaleByDouble(innerScale, innerScale, 1.0, 1.0),
               child: Container(
                 width: 160,
                 height: 160,
@@ -534,7 +543,7 @@ class AnimatedBuilderWidget extends AnimatedWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF61D1DB).withValues(alpha: 0.2),
+                      color: AppColors.accent.withValues(alpha: 0.2),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -726,7 +735,7 @@ class _ShimmerButtonState extends State<ShimmerButton>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF61D1DB).withValues(alpha: 0.4),
+                  color: AppColors.accent.withValues(alpha: 0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

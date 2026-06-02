@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
+import '../../widgets/sos_button.dart';
 
 class ReportHistoryPage extends StatefulWidget {
   const ReportHistoryPage({super.key});
@@ -29,12 +31,21 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await ApiService.getReports();
-      setState(() { _reports = data; _loading = false; });
+      setState(() {
+        _reports = data;
+        _loading = false;
+      });
     } catch (e) {
-      setState(() { _error = e.toString().replaceAll('Exception: ', ''); _loading = false; });
+      setState(() {
+        _error = e.toString().replaceAll('Exception: ', '');
+        _loading = false;
+      });
     }
   }
 
@@ -68,7 +79,11 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF245A72)),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 18,
+                          color: AppColors.brand,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -78,9 +93,11 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
                         fontFamily: 'Manrope',
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF245A72),
+                        color: AppColors.brand,
                       ),
                     ),
+                    const Spacer(),
+                    const SosIconButton(),
                   ],
                 ),
               ),
@@ -88,49 +105,67 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.brand),
+                  )
                 : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline, size: 48, color: Color(0xFF9D174D)),
-                            const SizedBox(height: 12),
-                            Text(_error!, textAlign: TextAlign.center,
-                                style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
-                            const SizedBox(height: 12),
-                            ElevatedButton(onPressed: _loadData, child: const Text('Coba lagi')),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Color(0xFF9D174D),
                         ),
-                      )
-                    : _reports.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.description_outlined, size: 64,
-                                    color: const Color(0xFF245A72).withValues(alpha: 0.2)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Belum ada riwayat laporan',
-                                  style: TextStyle(
-                                    fontFamily: 'NimbusSans',
-                                    fontSize: 15,
-                                    color: const Color(0xFF245A72).withValues(alpha: 0.4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _loadData,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                              itemCount: _reports.length,
-                              itemBuilder: (context, index) =>
-                                  _buildCard(_reports[index]),
-                            ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'NimbusSans',
+                            color: AppColors.brand,
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _loadData,
+                          child: const Text('Coba lagi'),
+                        ),
+                      ],
+                    ),
+                  )
+                : _reports.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.description_outlined,
+                          size: 64,
+                          color: AppColors.brand.withValues(alpha: 0.2),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada riwayat laporan',
+                          style: TextStyle(
+                            fontFamily: 'NimbusSans',
+                            fontSize: 15,
+                            color: AppColors.brand.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                      itemCount: _reports.length,
+                      itemBuilder: (context, index) =>
+                          _buildCard(_reports[index]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -138,7 +173,8 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
   }
 
   Widget _buildCard(Map<String, dynamic> report) {
-    final date = DateTime.tryParse(report['tgl_IR']?.toString() ?? '') ?? DateTime.now();
+    final date =
+        DateTime.tryParse(report['tgl_IR']?.toString() ?? '') ?? DateTime.now();
     final kategori = (report['kategori'] as num?)?.toInt() ?? 6;
     final category = _categories[kategori] ?? 'Lainnya';
     final status = report['status']?.toString() ?? 'pending';
@@ -152,7 +188,7 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF245A72).withValues(alpha: 0.06),
+            color: AppColors.brand.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 6),
             spreadRadius: -4,
@@ -172,14 +208,17 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFFB3F3F4).withValues(alpha: 0.5),
-                      const Color(0xFF61D1DB).withValues(alpha: 0.3),
+                      AppColors.accentLight.withValues(alpha: 0.5),
+                      AppColors.accent.withValues(alpha: 0.3),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(_categoryIcon(category), size: 24,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.7)),
+                child: Icon(
+                  _categoryIcon(category),
+                  size: 24,
+                  color: AppColors.brand.withValues(alpha: 0.7),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -192,7 +231,7 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
                         fontFamily: 'Manrope',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF245A72),
+                        color: AppColors.brand,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -203,7 +242,7 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
                       style: TextStyle(
                         fontFamily: 'NimbusSans',
                         fontSize: 12,
-                        color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                        color: AppColors.brand.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -251,15 +290,34 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
 
   Widget _buildStatusBadge(String status) {
     final (Color bg, Color text, String label) = switch (status) {
-      'pending' => (const Color(0xFFFEF9C3), const Color(0xFF854D0E), 'MENUNGGU'),
-      'proses' => (const Color(0xFFDBEAFE), const Color(0xFF1E40AF), 'DIPROSES'),
-      'selesai' => (const Color(0xFFDCFCE7), const Color(0xFF166534), 'SELESAI'),
-      _ => (const Color(0xFFF1F5F9), const Color(0xFF64748B), status.toUpperCase()),
+      'pending' => (
+        const Color(0xFFFEF9C3),
+        const Color(0xFF854D0E),
+        'MENUNGGU',
+      ),
+      'proses' => (
+        const Color(0xFFDBEAFE),
+        const Color(0xFF1E40AF),
+        'DIPROSES',
+      ),
+      'selesai' => (
+        const Color(0xFFDCFCE7),
+        const Color(0xFF166534),
+        'SELESAI',
+      ),
+      _ => (
+        const Color(0xFFF1F5F9),
+        const Color(0xFF64748B),
+        status.toUpperCase(),
+      ),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
       child: Text(
         label,
         style: TextStyle(
@@ -274,11 +332,11 @@ class _ReportHistoryPageState extends State<ReportHistoryPage> {
   }
 
   IconData _categoryIcon(String category) => switch (category) {
-        'Beban Kerja Berlebihan' => Icons.trending_up_outlined,
-        'Konflik dengan Rekan Kerja' => Icons.people_outline,
-        'Masalah Manajemen' => Icons.supervisor_account_outlined,
-        'Work-Life Balance' => Icons.balance_outlined,
-        'Lingkungan Kerja' => Icons.apartment_outlined,
-        _ => Icons.description_outlined,
-      };
+    'Beban Kerja Berlebihan' => Icons.trending_up_outlined,
+    'Konflik dengan Rekan Kerja' => Icons.people_outline,
+    'Masalah Manajemen' => Icons.supervisor_account_outlined,
+    'Work-Life Balance' => Icons.balance_outlined,
+    'Lingkungan Kerja' => Icons.apartment_outlined,
+    _ => Icons.description_outlined,
+  };
 }

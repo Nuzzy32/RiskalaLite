@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../services/api_service.dart';
 
@@ -11,7 +12,6 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  // selected category
   String _category = '';
   int _categoryId = 0;
 
@@ -20,8 +20,6 @@ class _ReportPageState extends State<ReportPage> {
   double _stressLevel = 3;
   bool _submitted = false;
   bool _submitting = false;
-
-  // loaded from API (replaces hardcoded list)
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
 
@@ -35,10 +33,12 @@ class _ReportPageState extends State<ReportPage> {
     try {
       final data = await ApiService.getKategoriLaporan();
       if (!mounted) return;
-      setState(() { _categories = data; _loadingCategories = false; });
+      setState(() {
+        _categories = data;
+        _loadingCategories = false;
+      });
     } catch (_) {
       if (!mounted) return;
-      // Fallback to hardcoded list if API fails
       setState(() {
         _categories = [
           {'id': 1, 'nama_kategori': 'Beban Kerja Berlebihan'},
@@ -96,7 +96,9 @@ class _ReportPageState extends State<ReportPage> {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: ${e.toString().replaceAll('Exception: ', '')}')),
+        SnackBar(
+          content: Text('Gagal: ${e.toString().replaceAll('Exception: ', '')}'),
+        ),
       );
     }
   }
@@ -117,7 +119,6 @@ class _ReportPageState extends State<ReportPage> {
         children: [
           Column(
             children: [
-              // Header
               SafeArea(
                 bottom: false,
                 child: Padding(
@@ -125,7 +126,8 @@ class _ReportPageState extends State<ReportPage> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.pushReplacementNamed(context, '/home'),
+                        onTap: () =>
+                            Navigator.pushReplacementNamed(context, '/home'),
                         child: Container(
                           width: 40,
                           height: 40,
@@ -140,7 +142,11 @@ class _ReportPageState extends State<ReportPage> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF245A72), size: 16),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: AppColors.brand,
+                            size: 16,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -153,7 +159,7 @@ class _ReportPageState extends State<ReportPage> {
                               fontFamily: 'Inter',
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF245A72),
+                              color: AppColors.brand,
                             ),
                           ),
                         ),
@@ -162,15 +168,12 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ),
               ),
-
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 160),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Subtext
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 40),
@@ -186,20 +189,22 @@ class _ReportPageState extends State<ReportPage> {
                           ),
                         ),
                       ),
-
-                      // Category
                       const Text(
                         'Kategori Masalah',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                         ),
                       ),
                       const SizedBox(height: 12),
                       GestureDetector(
-                        onTap: _loadingCategories ? null : () => setState(() => _showDropdown = !_showDropdown),
+                        onTap: _loadingCategories
+                            ? null
+                            : () => setState(
+                                () => _showDropdown = !_showDropdown,
+                              ),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(24, 16, 16, 16),
@@ -220,16 +225,22 @@ class _ReportPageState extends State<ReportPage> {
                                 child: Text(
                                   _loadingCategories
                                       ? 'Memuat kategori...'
-                                      : (_category.isEmpty ? 'Pilih kategori...' : _category),
+                                      : (_category.isEmpty
+                                            ? 'Pilih kategori...'
+                                            : _category),
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 14,
-                                    color: _category.isEmpty ? const Color(0xFF475569) : const Color(0xFF1E293B),
+                                    color: _category.isEmpty
+                                        ? const Color(0xFF475569)
+                                        : const Color(0xFF1E293B),
                                   ),
                                 ),
                               ),
                               Icon(
-                                _showDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                _showDropdown
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
                                 color: const Color(0xFF6B7280),
                               ),
                             ],
@@ -239,9 +250,15 @@ class _ReportPageState extends State<ReportPage> {
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
                         transitionBuilder: (child, animation) => FadeTransition(
-                          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                          opacity: CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOut,
+                          ),
                           child: SizeTransition(
-                            sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                            sizeFactor: CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
                             axisAlignment: -1,
                             child: child,
                           ),
@@ -255,7 +272,9 @@ class _ReportPageState extends State<ReportPage> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.12),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       blurRadius: 40,
                                       offset: const Offset(0, 10),
                                       spreadRadius: -10,
@@ -265,25 +284,36 @@ class _ReportPageState extends State<ReportPage> {
                                 child: Column(
                                   children: _categories.map((cat) {
                                     final nama = cat['nama_kategori'] as String;
-                                    final id   = cat['id'] as int;
+                                    final id = cat['id'] as int;
                                     final isSelected = _categoryId == id;
                                     return GestureDetector(
                                       onTap: () => setState(() {
-                                        _category   = nama;
+                                        _category = nama;
                                         _categoryId = id;
                                         _showDropdown = false;
                                       }),
                                       child: Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                        color: isSelected ? const Color(0xFF61D1DB).withValues(alpha: 0.05) : Colors.transparent,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        color: isSelected
+                                            ? AppColors.accent.withValues(
+                                                alpha: 0.05,
+                                              )
+                                            : Colors.transparent,
                                         child: Text(
                                           nama,
                                           style: TextStyle(
                                             fontFamily: 'Inter',
                                             fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                            color: isSelected ? const Color(0xFF61D1DB) : const Color(0xFF475569),
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
+                                            color: isSelected
+                                                ? AppColors.accent
+                                                : const Color(0xFF475569),
                                           ),
                                         ),
                                       ),
@@ -295,15 +325,13 @@ class _ReportPageState extends State<ReportPage> {
                       ),
 
                       const SizedBox(height: 32),
-
-                      // Description
                       const Text(
                         'Deskripsi Masalah',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF245A72),
+                          color: AppColors.brand,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -341,8 +369,6 @@ class _ReportPageState extends State<ReportPage> {
                       ),
 
                       const SizedBox(height: 32),
-
-                      // Stress Level
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -352,13 +378,18 @@ class _ReportPageState extends State<ReportPage> {
                               fontFamily: 'Inter',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF245A72),
+                              color: AppColors.brand,
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF60D0DC).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFF60D0DC,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(9999),
                             ),
                             child: Text(
@@ -379,7 +410,9 @@ class _ReportPageState extends State<ReportPage> {
                           activeTrackColor: const Color(0xFF60D0DC),
                           inactiveTrackColor: const Color(0xFFE2E8F0),
                           thumbColor: const Color(0xFF60D0DC),
-                          overlayColor: const Color(0xFF60D0DC).withValues(alpha: 0.2),
+                          overlayColor: const Color(
+                            0xFF60D0DC,
+                          ).withValues(alpha: 0.2),
                         ),
                         child: Slider(
                           value: _stressLevel,
@@ -419,8 +452,6 @@ class _ReportPageState extends State<ReportPage> {
                       ),
 
                       const SizedBox(height: 32),
-
-                      // Submit
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -429,10 +460,16 @@ class _ReportPageState extends State<ReportPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF60D0DC),
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: const Color(0xFF60D0DC).withValues(alpha: 0.5),
+                            disabledBackgroundColor: const Color(
+                              0xFF60D0DC,
+                            ).withValues(alpha: 0.5),
                             elevation: 4,
-                            shadowColor: const Color(0xFF60D0DC).withValues(alpha: 0.3),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+                            shadowColor: const Color(
+                              0xFF60D0DC,
+                            ).withValues(alpha: 0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9999),
+                            ),
                           ),
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
@@ -441,7 +478,10 @@ class _ReportPageState extends State<ReportPage> {
                                     key: ValueKey('loading'),
                                     width: 22,
                                     height: 22,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : Text(
                                     key: ValueKey(_submitted ? 'sent' : 'send'),
@@ -461,8 +501,6 @@ class _ReportPageState extends State<ReportPage> {
               ),
             ],
           ),
-
-          // Bottom Nav
           if (widget.showNav)
             Positioned(
               left: 0,

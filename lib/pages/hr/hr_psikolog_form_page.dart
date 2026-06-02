@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 
 class HrPsikologFormPage extends StatefulWidget {
@@ -138,7 +139,7 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment(-0.7, -1), end: Alignment(0.7, 1),
-          colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+          colors: [AppColors.accentLight, AppColors.accent],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32),
@@ -153,7 +154,7 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
               decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.3), shape: BoxShape.circle),
               child: const Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF245A72), size: 16),
+                  color: AppColors.brand, size: 16),
             ),
           ),
           const SizedBox(width: 16),
@@ -164,12 +165,12 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
                   style: TextStyle(
                       fontFamily: 'NimbusSans', fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF245A72).withValues(alpha: 0.6),
+                      color: AppColors.brand.withValues(alpha: 0.6),
                       letterSpacing: 1.2)),
               Text(_isEdit ? 'Edit Psikolog' : 'Tambah Psikolog',
                   style: const TextStyle(
                       fontFamily: 'Manrope', fontSize: 22,
-                      fontWeight: FontWeight.w700, color: Color(0xFF245A72))),
+                      fontWeight: FontWeight.w700, color: AppColors.brand)),
             ],
           ),
         ],
@@ -183,7 +184,7 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
             style: TextStyle(
                 fontFamily: 'NimbusSans', fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                color: AppColors.brand.withValues(alpha: 0.5),
                 letterSpacing: 0.8)),
       );
 
@@ -194,7 +195,7 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFF245A72).withValues(alpha: 0.05),
+                color: AppColors.brand.withValues(alpha: 0.05),
                 blurRadius: 16, offset: const Offset(0, 4)),
           ],
         ),
@@ -203,7 +204,7 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
 
   Widget _divider() => Divider(
       height: 1, indent: 16, endIndent: 16,
-      color: const Color(0xFF245A72).withValues(alpha: 0.07));
+      color: AppColors.brand.withValues(alpha: 0.07));
 
   Widget _field(TextEditingController c, String label, String hint,
       IconData icon, String? Function(String?)? validator,
@@ -216,17 +217,17 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
         validator: validator,
         style: const TextStyle(
             fontFamily: 'NimbusSans', fontSize: 14,
-            color: Color(0xFF245A72), fontWeight: FontWeight.w600),
+            color: AppColors.brand, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF61D1DB)),
+          prefixIcon: Icon(icon, size: 18, color: AppColors.accent),
           labelStyle: TextStyle(
               fontFamily: 'NimbusSans', fontSize: 13,
-              color: const Color(0xFF245A72).withValues(alpha: 0.6)),
+              color: AppColors.brand.withValues(alpha: 0.6)),
           hintStyle: TextStyle(
               fontFamily: 'NimbusSans', fontSize: 13,
-              color: const Color(0xFF245A72).withValues(alpha: 0.3)),
+              color: AppColors.brand.withValues(alpha: 0.3)),
           border: InputBorder.none,
           errorStyle: const TextStyle(fontFamily: 'NimbusSans', fontSize: 11),
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -241,9 +242,9 @@ class _HrPsikologFormPageState extends State<HrPsikologFormPage> {
       child: ElevatedButton(
         onPressed: _saving ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF245A72),
+          backgroundColor: AppColors.brand,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF245A72).withValues(alpha: 0.4),
+          disabledBackgroundColor: AppColors.brand.withValues(alpha: 0.4),
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 import 'hr_add_employee_page.dart';
 
@@ -74,7 +75,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                       onTap: () => Navigator.pop(context),
                       child: const Padding(
                         padding: EdgeInsets.only(right: 8),
-                        child: Icon(Icons.arrow_back_ios, size: 24, color: Color(0xFF245A72)),
+                        child: Icon(Icons.arrow_back_ios, size: 24, color: AppColors.brand),
                       ),
                     ),
                     Expanded(
@@ -84,7 +85,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                           style: const TextStyle(
                             fontFamily: 'Manrope', fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF245A72), letterSpacing: 1.2,
+                            color: AppColors.brand, letterSpacing: 1.2,
                           ),
                         ),
                       ),
@@ -92,7 +93,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                     const CircleAvatar(
                       radius: 20,
                       backgroundColor: Color(0xFFE0F2F4),
-                      child: Icon(Icons.person, color: Color(0xFF245A72), size: 18),
+                      child: Icon(Icons.person, color: AppColors.brand, size: 18),
                     ),
                   ],
                 ),
@@ -128,7 +129,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                   contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 ),
                 style: const TextStyle(
-                    fontFamily: 'NimbusSans', fontSize: 14, color: Color(0xFF245A72)),
+                    fontFamily: 'NimbusSans', fontSize: 14, color: AppColors.brand),
               ),
             ),
           ),
@@ -140,7 +141,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                 child: child,
               ),
               child: _loading
-                  ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: Color(0xFF245A72)))
+                  ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator(color: AppColors.brand))
                   : _error != null
                       ? _buildErrorState()
                       : _filteredEmployees.isEmpty
@@ -171,7 +172,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
             const Icon(Icons.error_outline, color: Color(0xFF9D174D), size: 48),
             const SizedBox(height: 12),
             Text(_error!,
-                style: const TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+                style: const TextStyle(fontFamily: 'NimbusSans', color: AppColors.brand)),
             const SizedBox(height: 12),
             ElevatedButton(onPressed: _load, child: const Text('Coba lagi')),
           ],
@@ -183,7 +184,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.people_outline, size: 56,
-                color: const Color(0xFF245A72).withValues(alpha: 0.2)),
+                color: AppColors.brand.withValues(alpha: 0.2)),
             const SizedBox(height: 12),
             Text(
               _searchQuery.isEmpty
@@ -191,7 +192,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                   : 'Tidak ditemukan',
               style: TextStyle(
                   fontFamily: 'NimbusSans', fontSize: 14,
-                  color: const Color(0xFF245A72).withValues(alpha: 0.5)),
+                  color: AppColors.brand.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -223,7 +224,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
             const CircleAvatar(
               radius: 24,
               backgroundColor: Color(0xFFF3F4F6),
-              child: Icon(Icons.person, color: Color(0xFF245A72), size: 24),
+              child: Icon(Icons.person, color: AppColors.brand, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -233,7 +234,7 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                   Text(emp['nama_user']?.toString() ?? '-',
                       style: const TextStyle(
                           fontFamily: 'Manrope', fontSize: 16,
-                          fontWeight: FontWeight.w700, color: Color(0xFF245A72))),
+                          fontWeight: FontWeight.w700, color: AppColors.brand)),
                   Text((emp['email_user']?.toString() ?? '-').toLowerCase(),
                       style: const TextStyle(
                           fontFamily: 'NimbusSans', fontSize: 11, color: Color(0xFF6B7280))),
@@ -246,11 +247,11 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
                 color: const Color(0xFFE0F2F4),
                 borderRadius: BorderRadius.circular(9999),
               ),
-              child: Text(emp['id_user']?.toString() ?? '-',
+              child: Text((emp['nip'] ?? emp['id_user'])?.toString() ?? '-',
                   style: const TextStyle(
                       fontFamily: 'NimbusSans', fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF245A72), letterSpacing: 0.25)),
+                      color: AppColors.brand, letterSpacing: 0.25)),
             ),
           ],
         ),
@@ -266,16 +267,16 @@ class _HrDivisionDetailPageState extends State<HrDivisionDetailPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Hapus Employee',
-          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, color: Color(0xFF245A72)),
+          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, color: AppColors.brand),
         ),
         content: Text(
           'Yakin ingin menghapus $name? Tindakan ini tidak bisa dibatalkan.',
-          style: const TextStyle(fontFamily: 'NimbusSans', fontSize: 14, color: Color(0xFF245A72)),
+          style: const TextStyle(fontFamily: 'NimbusSans', fontSize: 14, color: AppColors.brand),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal', style: TextStyle(fontFamily: 'NimbusSans', color: Color(0xFF245A72))),
+            child: const Text('Batal', style: TextStyle(fontFamily: 'NimbusSans', color: AppColors.brand)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),

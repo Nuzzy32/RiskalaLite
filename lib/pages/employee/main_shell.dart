@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/custom_drawer.dart';
+import '../../widgets/sos_button.dart';
 import 'analytics_page.dart';
 import 'home_page.dart';
 import 'report_page.dart';
@@ -40,7 +41,6 @@ class _MainShellState extends State<MainShell> {
       drawer: const CustomDrawer(),
       body: Stack(
         children: [
-          // Page content with iOS-like slide transition
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 350),
             switchInCurve: Curves.easeOutCubic,
@@ -59,16 +59,14 @@ class _MainShellState extends State<MainShell> {
             },
             child: _buildPage(),
           ),
-          // Persistent bottom nav
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: BottomNav(
-              active: _tabIds[_currentIndex],
-              onTap: _onTabTap,
-            ),
+            child: BottomNav(active: _tabIds[_currentIndex], onTap: _onTabTap),
           ),
+          if (_currentIndex != 1)
+            const Positioned(right: 24, bottom: 118, child: SosIconButton()),
         ],
       ),
     );

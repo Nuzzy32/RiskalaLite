@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../../theme/app_colors.dart';
+import '../../services/api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _kBrand = Color(0xFF245A72);
-const _kAccent = Color(0xFF61D1DB);
+const _kBrand = AppColors.brand;
+const _kAccent = AppColors.accent;
 
 const _kIndustries = [
   'Teknologi',
@@ -1136,7 +1137,7 @@ class _CompanyCodeRevealState extends State<_CompanyCodeReveal>
               fontFamily: 'Manrope',
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF61D1DB),
+              color: AppColors.accent,
               letterSpacing: 2,
             ),
           ),

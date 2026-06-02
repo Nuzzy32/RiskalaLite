@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
 
 class AnalyticsPage extends StatefulWidget {
@@ -70,14 +71,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       final daysAgo = now.difference(date).inDays;
       final weekIdx = (daysAgo / 7).floor();
       if (weekIdx >= 0 && weekIdx < 4) {
-        final score = ((a['total_score'] as num?)?.toDouble() ?? 0) / 50 * 100;
+        final score = ((a['total_score'] as num?)?.toDouble() ?? 0) / 40 * 100;
         weekScores[weekIdx].add(score);
       }
     }
 
     for (int i = 0; i < 4; i++) {
       if (weekScores[i].isNotEmpty) {
-        _stressScores[3 - i] = weekScores[i].reduce((a, b) => a + b) / weekScores[i].length;
+        _stressScores[3 - i] =
+            weekScores[i].reduce((a, b) => a + b) / weekScores[i].length;
       }
     }
   }
@@ -85,28 +87,28 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   static const _days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
   IconData _moodIcon(int score) => switch (score) {
-        5 => Icons.sentiment_very_satisfied,
-        4 => Icons.sentiment_satisfied,
-        3 => Icons.sentiment_neutral,
-        2 => Icons.sentiment_dissatisfied,
-        _ => Icons.sentiment_very_dissatisfied,
-      };
+    5 => Icons.sentiment_very_satisfied,
+    4 => Icons.sentiment_satisfied,
+    3 => Icons.sentiment_neutral,
+    2 => Icons.sentiment_dissatisfied,
+    _ => Icons.sentiment_very_dissatisfied,
+  };
 
   Color _moodColor(int score) => switch (score) {
-        5 => const Color(0xFF22C55E),
-        4 => const Color(0xFF61D1DB),
-        3 => const Color(0xFF60A5FA),
-        2 => const Color(0xFFFBBF24),
-        _ => const Color(0xFFFB923C),
-      };
+    5 => AppColors.success,
+    4 => AppColors.accent,
+    3 => const Color(0xFF60A5FA),
+    2 => const Color(0xFFFBBF24),
+    _ => const Color(0xFFFB923C),
+  };
 
   String _moodLabel(int score) => switch (score) {
-        5 => 'Sangat Baik',
-        4 => 'Baik',
-        3 => 'Netral',
-        2 => 'Kurang Baik',
-        _ => 'Stres',
-      };
+    5 => 'Sangat Baik',
+    4 => 'Baik',
+    3 => 'Netral',
+    2 => 'Kurang Baik',
+    _ => 'Stres',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +117,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       body: SafeArea(
         bottom: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF245A72)))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.brand),
+              )
             : RefreshIndicator(
                 onRefresh: _loadData,
                 child: SingleChildScrollView(
@@ -132,7 +136,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                             fontFamily: 'Manrope',
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF245A72),
+                            color: AppColors.brand,
                             letterSpacing: -0.6,
                           ),
                         ),
@@ -144,7 +148,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           style: TextStyle(
                             fontFamily: 'NimbusSans',
                             fontSize: 14,
-                            color: const Color(0xFF245A72).withValues(alpha: 0.5),
+                            color: AppColors.brand.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -173,7 +177,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF245A72).withValues(alpha: 0.06),
+              color: AppColors.brand.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: -4,
@@ -186,24 +190,33 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Mood Trend',
-                    style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF245A72))),
+                const Text(
+                  'Mood Trend',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brand,
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
+                    color: AppColors.accentLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text('7 Hari',
-                      style: TextStyle(
-                          fontFamily: 'NimbusSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF61D1DB))),
+                  child: const Text(
+                    '7 Hari',
+                    style: TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -221,22 +234,18 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     final fraction = hasData ? score / 5 : 0.1;
                     return Expanded(
                       child: GestureDetector(
-                        onTap: hasData
-                            ? () => _showMoodDetail(i, score)
-                            : null,
+                        onTap: hasData ? () => _showMoodDetail(i, score) : null,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               Icon(
-                                hasData
-                                    ? _moodIcon(score)
-                                    : Icons.remove,
+                                hasData ? _moodIcon(score) : Icons.remove,
                                 size: 16,
                                 color: hasData
                                     ? _moodColor(score)
-                                    : const Color(0xFF245A72).withValues(alpha: 0.15),
+                                    : AppColors.brand.withValues(alpha: 0.15),
                               ),
                               const SizedBox(height: 6),
                               AnimatedContainer(
@@ -249,14 +258,24 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                           begin: Alignment.bottomCenter,
                                           end: Alignment.topCenter,
                                           colors: [
-                                            _moodColor(score).withValues(alpha: 0.8),
-                                            _moodColor(score).withValues(alpha: 0.4),
+                                            _moodColor(
+                                              score,
+                                            ).withValues(alpha: 0.8),
+                                            _moodColor(
+                                              score,
+                                            ).withValues(alpha: 0.4),
                                           ],
                                         )
-                                      : LinearGradient(colors: [
-                                          const Color(0xFF245A72).withValues(alpha: 0.08),
-                                          const Color(0xFF245A72).withValues(alpha: 0.04),
-                                        ]),
+                                      : LinearGradient(
+                                          colors: [
+                                            AppColors.brand.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            AppColors.brand.withValues(
+                                              alpha: 0.04,
+                                            ),
+                                          ],
+                                        ),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -266,7 +285,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                   fontFamily: 'NimbusSans',
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF245A72).withValues(alpha: 0.45),
+                                  color: AppColors.brand.withValues(
+                                    alpha: 0.45,
+                                  ),
                                 ),
                               ),
                             ],
@@ -297,15 +318,17 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFF245A72).withValues(alpha: 0.12),
+                color: AppColors.brand.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             const SizedBox(height: 20),
             Container(
-              width: 64, height: 64,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: _moodColor(score).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
@@ -313,18 +336,24 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               child: Icon(_moodIcon(score), size: 36, color: _moodColor(score)),
             ),
             const SizedBox(height: 16),
-            Text('Hari ${_days[dayIdx]}',
-                style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 13,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5))),
+            Text(
+              'Hari ${_days[dayIdx]}',
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 13,
+                color: AppColors.brand.withValues(alpha: 0.5),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('Suasana Hati: ${_moodLabel(score)}',
-                style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF245A72))),
+            Text(
+              'Suasana Hati: ${_moodLabel(score)}',
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brand,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -332,12 +361,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 color: _moodColor(score).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text('Skor: $score/5',
-                  style: TextStyle(
-                      fontFamily: 'NimbusSans',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: _moodColor(score))),
+              child: Text(
+                'Skor: $score/5',
+                style: TextStyle(
+                  fontFamily: 'NimbusSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _moodColor(score),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
           ],
@@ -359,7 +391,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF245A72).withValues(alpha: 0.06),
+              color: AppColors.brand.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: -4,
@@ -372,24 +404,33 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Stress Level',
-                    style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF245A72))),
+                const Text(
+                  'Stress Level',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brand,
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB3F3F4).withValues(alpha: 0.3),
+                    color: AppColors.accentLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text('4 Minggu',
-                      style: TextStyle(
-                          fontFamily: 'NimbusSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF61D1DB))),
+                  child: const Text(
+                    '4 Minggu',
+                    style: TextStyle(
+                      fontFamily: 'NimbusSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -435,10 +476,42 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: const [
-                Text('Mg 1', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
-                Text('Mg 2', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
-                Text('Mg 3', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
-                Text('Mg 4', style: TextStyle(fontFamily: 'NimbusSans', fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
+                Text(
+                  'Mg 1',
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                Text(
+                  'Mg 2',
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                Text(
+                  'Mg 3',
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                Text(
+                  'Mg 4',
+                  style: TextStyle(
+                    fontFamily: 'NimbusSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
               ],
             ),
           ],
@@ -448,12 +521,16 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   void _showStressDetail(int weekIdx, double score) {
-    final level = score >= 60 ? 'Tinggi' : score >= 40 ? 'Sedang' : 'Rendah';
+    final level = score >= 60
+        ? 'Tinggi'
+        : score >= 40
+        ? 'Sedang'
+        : 'Rendah';
     final levelColor = score >= 60
         ? const Color(0xFFFB923C)
         : score >= 40
-            ? const Color(0xFFFBBF24)
-            : const Color(0xFF61D1DB);
+        ? const Color(0xFFFBBF24)
+        : AppColors.accent;
 
     showModalBottomSheet(
       context: context,
@@ -468,15 +545,17 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFF245A72).withValues(alpha: 0.12),
+                color: AppColors.brand.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             const SizedBox(height: 20),
             Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -489,26 +568,35 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 ),
               ),
               alignment: Alignment.center,
-              child: Text('${score.round()}',
-                  style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: levelColor)),
+              child: Text(
+                '${score.round()}',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: levelColor,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            Text('Minggu ${weekIdx + 1}',
-                style: TextStyle(
-                    fontFamily: 'NimbusSans',
-                    fontSize: 13,
-                    color: const Color(0xFF245A72).withValues(alpha: 0.5))),
+            Text(
+              'Minggu ${weekIdx + 1}',
+              style: TextStyle(
+                fontFamily: 'NimbusSans',
+                fontSize: 13,
+                color: AppColors.brand.withValues(alpha: 0.5),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('Skor Stress: ${score.round()}/100',
-                style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF245A72))),
+            Text(
+              'Skor Stress: ${score.round()}/100',
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brand,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -516,12 +604,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 color: levelColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text('Level: $level',
-                  style: TextStyle(
-                      fontFamily: 'NimbusSans',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: levelColor)),
+              child: Text(
+                'Level: $level',
+                style: TextStyle(
+                  fontFamily: 'NimbusSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: levelColor,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
           ],
@@ -533,19 +624,23 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   Widget _buildInsightsCard() {
     final avgMood = _hasMoodData
         ? _moodData.where((s) => s > 0).fold(0, (sum, s) => sum + s) /
-            _moodData.where((s) => s > 0).length
+              _moodData.where((s) => s > 0).length
         : 0.0;
     final lastStress = _stressScores.lastWhere((s) => s > 0, orElse: () => 0);
 
     String insight;
     if (!_hasMoodData && !_hasStressData) {
-      insight = 'Mulai isi mood harian dan stress assessment untuk melihat ringkasan kondisi kesehatan mentalmu di sini.';
+      insight =
+          'Mulai isi mood harian dan stress assessment untuk melihat ringkasan kondisi kesehatan mentalmu di sini.';
     } else if (lastStress < 45 && avgMood >= 3) {
-      insight = 'Stress level kamu menurun dan mood kamu stabil minggu ini. Pertahankan kebiasaan wellness kamu!';
+      insight =
+          'Stress level kamu menurun dan mood kamu stabil minggu ini. Pertahankan kebiasaan wellness kamu!';
     } else if (lastStress >= 60) {
-      insight = 'Stress level kamu cukup tinggi minggu ini. Coba luangkan waktu untuk meditasi dan istirahat yang cukup.';
+      insight =
+          'Stress level kamu cukup tinggi minggu ini. Coba luangkan waktu untuk meditasi dan istirahat yang cukup.';
     } else {
-      insight = 'Mood dan stress kamu dalam level moderate. Terus pantau kondisi kamu dan jangan ragu untuk meminta bantuan.';
+      insight =
+          'Mood dan stress kamu dalam level moderate. Terus pantau kondisi kamu dan jangan ragu untuk meminta bantuan.';
     }
 
     return Padding(
@@ -557,12 +652,12 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           gradient: const LinearGradient(
             begin: Alignment(-0.7, -1),
             end: Alignment(0.7, 1),
-            colors: [Color(0xFFB3F3F4), Color(0xFF61D1DB)],
+            colors: [AppColors.accentLight, AppColors.accent],
           ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF61D1DB).withValues(alpha: 0.25),
+              color: AppColors.accent.withValues(alpha: 0.25),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: -4,
@@ -580,16 +675,22 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.auto_awesome_outlined,
-                      size: 20, color: Colors.white),
+                  child: const Icon(
+                    Icons.auto_awesome_outlined,
+                    size: 20,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                const Text('Insights',
-                    style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white)),
+                const Text(
+                  'Insights',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -615,15 +716,18 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bar_chart_outlined, size: 32,
-                color: const Color(0xFF245A72).withValues(alpha: 0.15)),
+            Icon(
+              Icons.bar_chart_outlined,
+              size: 32,
+              color: AppColors.brand.withValues(alpha: 0.15),
+            ),
             const SizedBox(height: 8),
             Text(
               message,
               style: TextStyle(
                 fontFamily: 'NimbusSans',
                 fontSize: 13,
-                color: const Color(0xFF245A72).withValues(alpha: 0.35),
+                color: AppColors.brand.withValues(alpha: 0.35),
               ),
             ),
           ],
@@ -668,13 +772,14 @@ class _StressChartPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF61D1DB).withValues(alpha: 0.3),
-            const Color(0xFF61D1DB).withValues(alpha: 0.02),
+            AppColors.accent.withValues(alpha: 0.3),
+            AppColors.accent.withValues(alpha: 0.02),
           ],
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    final linePath = Path()..moveTo(activePoints.first.dx, activePoints.first.dy);
+    final linePath = Path()
+      ..moveTo(activePoints.first.dx, activePoints.first.dy);
     for (var i = 1; i < activePoints.length; i++) {
       final prev = activePoints[i - 1];
       final curr = activePoints[i];
@@ -684,7 +789,7 @@ class _StressChartPainter extends CustomPainter {
     canvas.drawPath(
       linePath,
       Paint()
-        ..color = const Color(0xFF61D1DB)
+        ..color = AppColors.accent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
         ..strokeCap = StrokeCap.round
@@ -692,9 +797,13 @@ class _StressChartPainter extends CustomPainter {
     );
 
     for (final p in activePoints) {
-      canvas.drawCircle(p, 8, Paint()..color = const Color(0xFF61D1DB).withValues(alpha: 0.15));
+      canvas.drawCircle(
+        p,
+        8,
+        Paint()..color = AppColors.accent.withValues(alpha: 0.15),
+      );
       canvas.drawCircle(p, 5, Paint()..color = Colors.white);
-      canvas.drawCircle(p, 3.5, Paint()..color = const Color(0xFF61D1DB));
+      canvas.drawCircle(p, 3.5, Paint()..color = AppColors.accent);
 
       final score = 100 - ((p.dy / size.height) * 100);
       final tp = TextPainter(
@@ -704,7 +813,7 @@ class _StressChartPainter extends CustomPainter {
             fontFamily: 'NimbusSans',
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF245A72).withValues(alpha: 0.7),
+            color: AppColors.brand.withValues(alpha: 0.7),
           ),
         ),
         textDirection: TextDirection.ltr,
